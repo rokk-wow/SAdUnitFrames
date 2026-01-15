@@ -1,0 +1,17 @@
+## Interface: 120000
+## Title: SAdUnitFrames
+## Author: Your Name
+## Version: 1.0
+## SavedVariables: SAdUnitFrames_Settings_Global
+## SavedVariablesPerCharacter: SAdUnitFrames_Settings_Char
+## AddonCompartmentFunc: SAdUnitFrames_Compartment_Func
+## IconTexture: Interface\Icons\boss_odunrunes_green
+
+Libs\LibSAdCore\LibSAdCore.lua
+
+Frames\PlayerFrame.lua
+Frames\TargetFrame.lua
+Frames\FocusFrame.lua
+Frames\PetFrame.lua
+SAdUnitFrames.lua
+Localization.lua
