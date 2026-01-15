@@ -71,89 +71,10 @@ function addon:LoadConfig()
                 },
             }
         }
-
-        self.config.settings.enabledFrames = {
-            title = "enabledFramesTitle",
-            controls = {
-                {
-                    type = "checkbox",
-                    name = "enablePlayerFrame",
-                    default = true,
-                    onValueChange = function(isEnabled)
-                        addon:handleFrameToggle("Player", isEnabled)
-                    end
-                },
-                {
-                    type = "checkbox",
-                    name = "enableTargetFrame",
-                    default = true,
-                    onValueChange = function(isEnabled)
-                        addon:handleFrameToggle("Target", isEnabled)
-                    end
-                },
-                {
-                    type = "checkbox",
-                    name = "enablePetFrame",
-                    default = true,
-                    onValueChange = function(isEnabled)
-                        addon:handleFrameToggle("Pet", isEnabled)
-                    end
-                },
-                {
-                    type = "checkbox",
-                    name = "enableFocusFrame",
-                    default = true,
-                    onValueChange = function(isEnabled)
-                        addon:handleFrameToggle("Focus", isEnabled)
-                    end
-                }
-            }
-        }
-end
-
-function addon:handleFrameToggle(frameName, isEnabled)
-    if not isEnabled then
-        self:ShowDialog({
-            title = "disableFrameTitle",
-            controls = {
-                {
-                    type = "description",
-                    name = "disableFrameMessage"
-                },
-                {
-                    type = "button",
-                    name = "disableFrameConfirm",
-                    onClick = function()
-                        ReloadUI()
-                    end
-                },
-                {
-                    type = "button",
-                    name = "disableFrameCancel",
-                    onClick = function()
-                        self.settings.enabledFrames["enable" .. frameName .. "Frame"] = true
-                    end
-                }
-            },
-            onClose = function()
-                self.settings.enabledFrames["enable" .. frameName .. "Frame"] = true
-            end
-        })
-    else
-        local updateFunc = self["update" .. frameName .. "Frame"]
-        if updateFunc then
-            updateFunc(self)
-        end
-    end
 end
 
 function addon:updateUnitFrame(frameType)
     local frameTypeLower = frameType:lower()
-    local settingName = "enable" .. frameType .. "Frame"
-    
-    if not self.settings.enabledFrames[settingName] then
-        return
-    end
     
     addon:debug("Updating " .. frameTypeLower .. " frame")
     
@@ -170,11 +91,15 @@ end
 function addon:getUnitColor(frameType)
     local unitToken = frameType:lower()
     
+    addon:debug("Getting color for unit: " .. unitToken)
+    addon:debug("UnitIsPlayer: " .. tostring(UnitIsPlayer(unitToken)))
+    
     -- For player unit, always use class color
     if unitToken == "player" then
         local _, classFileName = UnitClass(unitToken)
         if classFileName and RAID_CLASS_COLORS[classFileName] then
             local classColor = RAID_CLASS_COLORS[classFileName]
+            addon:debug("Player class color: " .. classColor.r .. ", " .. classColor.g .. ", " .. classColor.b)
             return classColor.r, classColor.g, classColor.b
         end
     end
@@ -182,15 +107,19 @@ function addon:getUnitColor(frameType)
     -- For other players
     if UnitIsPlayer(unitToken) then
         local _, classFileName = UnitClass(unitToken)
+        addon:debug("Target is player, class: " .. tostring(classFileName))
         if classFileName and RAID_CLASS_COLORS[classFileName] then
             local classColor = RAID_CLASS_COLORS[classFileName]
+            addon:debug("Target class color: " .. classColor.r .. ", " .. classColor.g .. ", " .. classColor.b)
             return classColor.r, classColor.g, classColor.b
         end
     end
     
     -- Use Blizzard's default unit selection color for everything else
     local r, g, b = UnitSelectionColor(unitToken)
+    addon:debug("UnitSelectionColor: " .. tostring(r) .. ", " .. tostring(g) .. ", " .. tostring(b))
     if not r or (r == 0 and g == 0 and b == 0) then
+        addon:debug("Using fallback white color")
         return 1, 1, 1
     end
     return r, g, b
@@ -301,7 +230,7 @@ end
 
 function addon:updateAllFrames()
     addon:debug("Updating all frames")
-    for _, frameType in ipairs({"Player", "Target", "Pet", "Focus"}) do
+    for _, frameType in ipairs({"Player", "Target", "TargetTarget", "Pet", "Focus", "FocusTarget"}) do
         self:updateUnitFrame(frameType)
     end
 end
@@ -319,4 +248,16 @@ addon:RegisterEvent("PLAYER_ENTERING_WORLD", function()
         end
     end
     C_Timer.After(0.1, tryUpdate)
+end)
+
+addon:RegisterEvent("PLAYER_TARGET_CHANGED", function()
+    addon:updateUnitFrame("Target")
+    addon:updateUnitFrame("TargetTarget")
+end)
+
+addon:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", function()
+    addon:debug("Spec changed, updating player frame")
+    C_Timer.After(0.2, function()
+        addon:updateUnitFrame("Player")
+    end)
 end)

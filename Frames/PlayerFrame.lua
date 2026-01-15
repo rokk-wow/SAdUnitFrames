@@ -14,6 +14,7 @@ function addon.unitFrames.player:removePortrait()
     local frameTexture = PlayerFrame.PlayerFrameContainer.FrameTexture
     local statusTexture = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.StatusTexture
     local portraitCornerIcon = PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual.PlayerPortraitCornerIcon
+    local alternatePowerFrameTexture = PlayerFrame.PlayerFrameContainer.AlternatePowerFrameTexture
     
     local HealthBarsContainer = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer
     local nameText = PlayerName
@@ -29,6 +30,7 @@ function addon.unitFrames.player:removePortrait()
     addon:hideFrame(frameTexture)
     addon:hideFrame(statusTexture)
     addon:hideFrame(portraitCornerIcon)
+    addon:hideFrame(alternatePowerFrameTexture)
     
     if restLoop and nameText then
         addon:setFramePoint(restLoop, "BOTTOMLEFT", PlayerName, "RIGHT", -5, 0)
@@ -156,3 +158,130 @@ function addon.unitFrames.player:hideManaText()
     end
 end
 
+function addon.unitFrames.player:handleSecondaryPowerBar()
+    addon:debug("Handling secondary power bar (Stagger, etc.)")
+    
+    -- For Brewmaster monks - MonkStaggerBar
+    local staggerBar = _G["MonkStaggerBar"]
+    
+    if staggerBar then
+        addon:debug("Found MonkStaggerBar")
+        
+        -- Positioning settings
+        local offsetY = -8
+        
+        -- Apply border and background
+        addon:addBorder(staggerBar)
+        addon:addBackground(staggerBar)
+        
+        -- Apply texture
+        local texturePath = addon:getTexturePath(addon.settings.frameStyle.statusbarTexture)
+        if staggerBar.SetStatusBarTexture then
+            staggerBar:SetStatusBarTexture(texturePath)
+        end
+        
+        -- Hide power bar mask
+        local powerBarMask = staggerBar.PowerBarMask
+        if powerBarMask then
+            addon:hideFrame(powerBarMask)
+        end
+        
+        -- Position stagger bar
+        local HealthBarsContainer = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer
+        if HealthBarsContainer then
+            staggerBar:ClearAllPoints()
+            staggerBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
+            staggerBar:SetPoint("TOPRIGHT", HealthBarsContainer, "BOTTOMRIGHT", 0, offsetY)
+        end
+        
+        -- Hide text on stagger bar
+        local regions = {staggerBar:GetRegions()}
+        for _, region in pairs(regions) do
+            if region:GetObjectType() == "FontString" then
+                addon:hideFrame(region)
+            end
+        end
+    end
+end
+
+function addon.unitFrames.player:adjustRuneFrame()
+    addon:debug("Adjusting DK rune frame")
+    
+    -- Rune frame positioning settings
+    local runeScale = 0.85
+    local runeOffsetX = 2
+    local runeOffsetY = -8
+    
+    local runeFrame = _G["RuneFrame"]
+    local HealthBarsContainer = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer
+    
+    if runeFrame and HealthBarsContainer then
+        addon:debug("Found RuneFrame")
+        
+        -- Hook to maintain position
+        if not runeFrame.sadunitframes_positionHooked then
+            runeFrame.sadunitframes_positionHooked = true
+            hooksecurefunc(runeFrame, "SetPoint", function(self)
+                if self.sadunitframes_settingPosition then return end
+                C_Timer.After(0, function()
+                    self.sadunitframes_settingPosition = true
+                    self:ClearAllPoints()
+                    self:SetPoint("TOP", HealthBarsContainer, "BOTTOM", runeOffsetX, runeOffsetY)
+                    self.sadunitframes_settingPosition = false
+                end)
+            end)
+        end
+        
+        -- Set scale (makes it smaller/narrower)
+        runeFrame:SetScale(runeScale)
+        
+        -- Position below health bar
+        runeFrame.sadunitframes_settingPosition = true
+        runeFrame:ClearAllPoints()
+        runeFrame:SetPoint("TOP", HealthBarsContainer, "BOTTOM", runeOffsetX, runeOffsetY)
+        runeFrame.sadunitframes_settingPosition = false
+        
+        addon:debug("RuneFrame adjusted with scale: " .. tostring(runeScale))
+    end
+end
+
+function addon.unitFrames.player:adjustEssenceFrame()
+    addon:debug("Adjusting Evoker essence frame")
+    
+    -- Essence frame positioning settings
+    local essenceScale = 0.85
+    local essenceOffsetX = 0
+    local essenceOffsetY = -8
+    
+    local essenceFrame = _G["EssencePlayerFrame"]
+    local HealthBarsContainer = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer
+    
+    if essenceFrame and HealthBarsContainer then
+        addon:debug("Found EssencePlayerFrame")
+        
+        -- Hook to maintain position
+        if not essenceFrame.sadunitframes_positionHooked then
+            essenceFrame.sadunitframes_positionHooked = true
+            hooksecurefunc(essenceFrame, "SetPoint", function(self)
+                if self.sadunitframes_settingPosition then return end
+                C_Timer.After(0, function()
+                    self.sadunitframes_settingPosition = true
+                    self:ClearAllPoints()
+                    self:SetPoint("TOP", HealthBarsContainer, "BOTTOM", essenceOffsetX, essenceOffsetY)
+                    self.sadunitframes_settingPosition = false
+                end)
+            end)
+        end
+        
+        -- Set scale (makes it smaller/narrower)
+        essenceFrame:SetScale(essenceScale)
+        
+        -- Position below health bar
+        essenceFrame.sadunitframes_settingPosition = true
+        essenceFrame:ClearAllPoints()
+        essenceFrame:SetPoint("TOP", HealthBarsContainer, "BOTTOM", essenceOffsetX, essenceOffsetY)
+        essenceFrame.sadunitframes_settingPosition = false
+        
+        addon:debug("EssencePlayerFrame adjusted with scale: " .. tostring(essenceScale))
+    end
+end
