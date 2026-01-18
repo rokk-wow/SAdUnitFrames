@@ -4,8 +4,9 @@ local addon = SAdCore:GetAddon(addonName)
 
 addon.unitFrames = addon.unitFrames or {}
 addon.unitFrames.targettarget = addon.unitFrames.targettarget or {}
+addon.CombatSafe = addon.CombatSafe or {}
 
-addon.combatSafe.adjustTargetOfTargetManaBar = function(self, manaBar, healthBar, offsetY)
+addon.CombatSafe.adjustTargetOfTargetManaBar = function(self, manaBar, healthBar, offsetY)
     manaBar.sadunitframes_settingPosition = true
     manaBar:ClearAllPoints()
     manaBar:SetPoint("TOPLEFT", healthBar, "BOTTOMLEFT", 0, offsetY)
@@ -78,6 +79,14 @@ function addon.unitFrames.targettarget:addBackground()
     end
 end
 
+addon.CombatSafe.adjustTargetOfTargetText = function(self, nameText, healthBar, textOffsetX, textOffsetY, textScale)
+    nameText:SetScale(textScale)
+    nameText:SetJustifyH("LEFT")
+    nameText:ClearAllPoints()
+    nameText:SetPoint("BOTTOMLEFT", healthBar, "TOPLEFT", textOffsetX, textOffsetY)
+    return true
+end
+
 function addon.unitFrames.targettarget:adjustText()
     addon:debug("Adjusting target of target frame text")
     
@@ -92,11 +101,7 @@ function addon.unitFrames.targettarget:adjustText()
     if not nameText or not healthBar then return end
     
     -- Scale and align text
-    nameText:SetScale(textScale)
-    nameText:SetJustifyH("LEFT")
-    
-    nameText:ClearAllPoints()
-    nameText:SetPoint("BOTTOMLEFT", healthBar, "TOPLEFT", textOffsetX, textOffsetY)
+    addon.CombatSafe:adjustTargetOfTargetText(nameText, healthBar, textOffsetX, textOffsetY, textScale)
 end
 
 function addon.unitFrames.targettarget:adjustManaBar()
@@ -118,7 +123,7 @@ function addon.unitFrames.targettarget:adjustManaBar()
         end)
     end
     
-    addon.combatSafe:adjustTargetOfTargetManaBar(manaBar, healthBar, offsetY)
+    addon.CombatSafe:adjustTargetOfTargetManaBar(manaBar, healthBar, offsetY)
 end
 
 function addon.unitFrames.targettarget:hideManaText()
@@ -138,6 +143,14 @@ end
 
 function addon.unitFrames.targettarget:updateTexture()
     addon:debug("Updating target of target frame texture")
+end
+
+addon.CombatSafe.adjustTargetOfTargetPosition = function(self, totFrame, targetHealthBar, offsetX, offsetY)
+    totFrame.sadunitframes_settingPosition = true
+    totFrame:ClearAllPoints()
+    totFrame:SetPoint("LEFT", targetHealthBar, "RIGHT", offsetX, offsetY)
+    totFrame.sadunitframes_settingPosition = false
+    return true
 end
 
 function addon.unitFrames.targettarget:adjustPosition()
@@ -162,8 +175,5 @@ function addon.unitFrames.targettarget:adjustPosition()
         end)
     end
     
-    totFrame.sadunitframes_settingPosition = true
-    totFrame:ClearAllPoints()
-    totFrame:SetPoint("LEFT", targetHealthBar, "RIGHT", offsetX, offsetY)
-    totFrame.sadunitframes_settingPosition = false
+    addon.CombatSafe:adjustTargetOfTargetPosition(totFrame, targetHealthBar, offsetX, offsetY)
 end

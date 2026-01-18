@@ -113,7 +113,6 @@ function addon:getUnitColor(frameType)
         end
     end
     
-    -- Use Blizzard's default unit selection color for everything else
     local r, g, b = UnitSelectionColor(unitToken)
     addon:debug("UnitSelectionColor: " .. tostring(r) .. ", " .. tostring(g) .. ", " .. tostring(b))
     if not r or (r == 0 and g == 0 and b == 0) then
@@ -195,7 +194,9 @@ function addon:addBackground(bar)
     end
 end
 
-addon.combatSafe.hideFrame = function(self, frame)
+addon.CombatSafe = addon.CombatSafe or {}
+
+addon.CombatSafe.hideFrame = function(self, frame)
     if not frame then return false end
     
     if not frame.sadunitframes_hideHooked then
@@ -215,21 +216,21 @@ addon.combatSafe.hideFrame = function(self, frame)
     return true
 end
 
-function addon:hideFrame(frame)
-    if not frame then return end
-    self.combatSafe:hideFrame(frame)
-end
-
-addon.combatSafe.setFramePoint = function(self, frame, ...)
+addon.CombatSafe.setFramePoint = function(self, frame, ...)
     if not frame then return false end
     frame:ClearAllPoints()
     frame:SetPoint(...)
     return true
 end
 
+function addon:hideFrame(frame)
+    if not frame then return end
+    self.CombatSafe:hideFrame(frame)
+end
+
 function addon:setFramePoint(frame, ...)
     if not frame then return end
-    self.combatSafe:setFramePoint(frame, ...)
+    self.CombatSafe:setFramePoint(frame, ...)
 end
 
 function addon:getTexturePath(textureName)

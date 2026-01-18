@@ -4,8 +4,9 @@ local addon = SAdCore:GetAddon(addonName)
 
 addon.unitFrames = addon.unitFrames or {}
 addon.unitFrames.focus = addon.unitFrames.focus or {}
+addon.CombatSafe = addon.CombatSafe or {}
 
-addon.combatSafe.adjustFocusManaBar = function(self, manaBar, HealthBarsContainer, offsetY)
+addon.CombatSafe.adjustFocusManaBar = function(self, manaBar, HealthBarsContainer, offsetY)
     manaBar.sadunitframes_settingPosition = true
     manaBar:ClearAllPoints()
     manaBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
@@ -152,7 +153,7 @@ function addon.unitFrames.focus:adjustManaBar()
         end)
     end
     
-    addon.combatSafe:adjustFocusManaBar(manaBar, HealthBarsContainer, offsetY)
+    addon.CombatSafe:adjustFocusManaBar(manaBar, HealthBarsContainer, offsetY)
 end
 
 function addon.unitFrames.focus:hideManaText()

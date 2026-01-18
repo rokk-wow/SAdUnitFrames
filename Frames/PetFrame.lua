@@ -4,6 +4,7 @@ local addon = SAdCore:GetAddon(addonName)
 
 addon.unitFrames = addon.unitFrames or {}
 addon.unitFrames.pet = addon.unitFrames.pet or {}
+addon.CombatSafe = addon.CombatSafe or {}
 
 function addon.unitFrames.pet:removePortrait()
     addon:debug("Removing pet portrait")
@@ -75,6 +76,11 @@ function addon.unitFrames.pet:addBackground()
     end
 end
 
+addon.CombatSafe.adjustPetHealthBar = function(self, healthBar, healthBarHeight)
+    healthBar:SetHeight(healthBarHeight)
+    return true
+end
+
 function addon.unitFrames.pet:adjustHealthBar()
     addon:debug("Adjusting pet health bar height")
     
@@ -84,9 +90,17 @@ function addon.unitFrames.pet:adjustHealthBar()
     local healthBar = _G["PetFrameHealthBar"]
     
     if healthBar then
-        healthBar:SetHeight(healthBarHeight)
+        addon.CombatSafe:adjustPetHealthBar(healthBar, healthBarHeight)
         addon:debug("Pet health bar height set to: " .. tostring(healthBarHeight))
     end
+end
+
+addon.CombatSafe.adjustPetText = function(self, nameText, healthBar, textOffsetX, textOffsetY, textScale)
+    nameText:SetScale(textScale)
+    nameText:SetJustifyH("LEFT")
+    nameText:ClearAllPoints()
+    nameText:SetPoint("BOTTOMLEFT", healthBar, "TOPLEFT", textOffsetX, textOffsetY)
+    return true
 end
 
 function addon.unitFrames.pet:adjustText()
@@ -102,12 +116,7 @@ function addon.unitFrames.pet:adjustText()
     
     if not nameText or not healthBar then return end
     
-    -- Scale and align text
-    nameText:SetScale(textScale)
-    nameText:SetJustifyH("LEFT")
-    
-    nameText:ClearAllPoints()
-    nameText:SetPoint("BOTTOMLEFT", healthBar, "TOPLEFT", textOffsetX, textOffsetY)
+    addon.CombatSafe:adjustPetText(nameText, healthBar, textOffsetX, textOffsetY, textScale)
 end
 
 -- function addon.unitFrames.pet:adjustManaBar()

@@ -4,8 +4,9 @@ local addon = SAdCore:GetAddon(addonName)
 
 addon.unitFrames = addon.unitFrames or {}
 addon.unitFrames.target = addon.unitFrames.target or {}
+addon.CombatSafe = addon.CombatSafe or {}
 
-addon.combatSafe.adjustTargetManaBar = function(self, manaBar, HealthBarsContainer, offsetY)
+addon.CombatSafe.adjustTargetManaBar = function(self, manaBar, HealthBarsContainer, offsetY)
     manaBar.sadunitframes_settingPosition = true
     manaBar:ClearAllPoints()
     manaBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
@@ -98,12 +99,12 @@ function addon.unitFrames.target:addBackground()
     end
 end
 
-addon.combatSafe.adjustTargetHealthBar = function(self, healthBarHeight)
+addon.CombatSafe.adjustTargetHealthBar = function(self, healthBarHeight)
     local HealthBarsContainer = TargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer
     
     if HealthBarsContainer then
         HealthBarsContainer:SetHeight(healthBarHeight)
-        self:debug("Target HealthBarsContainer height set to: " .. tostring(healthBarHeight))
+        addon:debug("Target HealthBarsContainer height set to: " .. tostring(healthBarHeight))
     end
     return true
 end
@@ -112,7 +113,7 @@ function addon.unitFrames.target:adjustHealthBar()
     addon:debug("Adjusting target health bar height")
     
     local healthBarHeight = 19
-    addon.combatSafe:adjustTargetHealthBar(healthBarHeight)
+    addon.CombatSafe:adjustTargetHealthBar(healthBarHeight)
 end
 
 function addon.unitFrames.target:adjustText()
@@ -160,7 +161,7 @@ function addon.unitFrames.target:adjustManaBar()
         end)
     end
     
-    addon.combatSafe:adjustTargetManaBar(manaBar, HealthBarsContainer, offsetY)
+    addon.CombatSafe:adjustTargetManaBar(manaBar, HealthBarsContainer, offsetY)
 end
 
 function addon.unitFrames.target:hideManaText()
@@ -192,6 +193,13 @@ function addon.unitFrames.target:hidePvpIcon()
     addon:hideFrame(prestigeBadge)
 end
 
+addon.CombatSafe.adjustEliteDragonPosition = function(self, dragonTexture, TargetFrame)
+    dragonTexture:SetScale(0.35)
+    dragonTexture:ClearAllPoints()
+    dragonTexture:SetPoint("LEFT", TargetFrame, "RIGHT", -300, 0)
+    return true
+end
+
 function addon.unitFrames.target:adjustEliteDragon()
     addon:debug("Adjusting elite dragon")
     
@@ -199,12 +207,14 @@ function addon.unitFrames.target:adjustEliteDragon()
     
     if not dragonTexture then return end
     
-    -- Scale down by 50%
-    dragonTexture:SetScale(0.35)
-    
-    -- Position to the right of the target frame
-    dragonTexture:ClearAllPoints()
-    dragonTexture:SetPoint("LEFT", TargetFrame, "RIGHT", -300, 0)
+    -- Scale down and position to the right of the target frame
+    addon.CombatSafe:adjustEliteDragonPosition(dragonTexture, TargetFrame)
+end
+
+addon.CombatSafe.adjustHighLevelSkullPosition = function(self, skull, HealthBarsContainer)
+    skull:ClearAllPoints()
+    skull:SetPoint("RIGHT", HealthBarsContainer, "LEFT", -3, 0)
+    return true
 end
 
 function addon.unitFrames.target:adjustHighLevelSkull()
@@ -215,8 +225,19 @@ function addon.unitFrames.target:adjustHighLevelSkull()
     
     if not skull then return end
     
-    skull:ClearAllPoints()
-    skull:SetPoint("RIGHT", HealthBarsContainer, "LEFT", -3, 0)
+    addon.CombatSafe:adjustHighLevelSkullPosition(skull, HealthBarsContainer)
+end
+
+addon.CombatSafe.adjustTargetCastBarPosition = function(self, castBar, HealthBarsContainer, castBarWidth, castBarOffsetX, castBarOffsetY)
+    castBar.sadunitframes_settingWidth = true
+    castBar:SetWidth(castBarWidth)
+    castBar.sadunitframes_settingWidth = false
+    
+    castBar.sadunitframes_settingPosition = true
+    castBar:ClearAllPoints()
+    castBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", castBarOffsetX, castBarOffsetY)
+    castBar.sadunitframes_settingPosition = false
+    return true
 end
 
 function addon.unitFrames.target:adjustCastBar()
@@ -244,13 +265,9 @@ function addon.unitFrames.target:adjustCastBar()
         return
     end
     
-    -- Set cast bar width
+    -- Set cast bar width and position
     addon:debug("Setting cast bar width to: " .. tostring(castBarWidth))
-    castBar:SetWidth(castBarWidth)
-    
-    -- Clear and reposition
-    castBar:ClearAllPoints()
-    castBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", castBarOffsetX, castBarOffsetY)
+    addon.CombatSafe:adjustTargetCastBarPosition(castBar, HealthBarsContainer, castBarWidth, castBarOffsetX, castBarOffsetY)
     
     addon:debug("Cast bar repositioned")
     
@@ -260,19 +277,14 @@ function addon.unitFrames.target:adjustCastBar()
         hooksecurefunc(castBar, "SetWidth", function(self, width)
             if self.sadunitframes_settingWidth then return end
             if math.abs(width - castBarWidth) > 1 then
-                self.sadunitframes_settingWidth = true
-                self:SetWidth(castBarWidth)
-                self.sadunitframes_settingWidth = false
+                addon.CombatSafe:adjustTargetCastBarPosition(self, HealthBarsContainer, castBarWidth, castBarOffsetX, castBarOffsetY)
             end
         end)
         
         hooksecurefunc(castBar, "SetPoint", function(self)
             if self.sadunitframes_settingPosition then return end
             C_Timer.After(0, function()
-                self.sadunitframes_settingPosition = true
-                self:ClearAllPoints()
-                self:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", castBarOffsetX, castBarOffsetY)
-                self.sadunitframes_settingPosition = false
+                addon.CombatSafe:adjustTargetCastBarPosition(self, HealthBarsContainer, castBarWidth, castBarOffsetX, castBarOffsetY)
             end)
         end)
     end

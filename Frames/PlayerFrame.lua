@@ -4,8 +4,9 @@ local addon = SAdCore:GetAddon(addonName)
 
 addon.unitFrames = addon.unitFrames or {}
 addon.unitFrames.player = addon.unitFrames.player or {}
+addon.CombatSafe = addon.CombatSafe or {}
 
-addon.combatSafe.adjustPlayerManaBar = function(self, manaBar, HealthBarsContainer, offsetY)
+addon.CombatSafe.adjustPlayerManaBar = function(self, manaBar, HealthBarsContainer, offsetY)
     manaBar.sadunitframes_settingPosition = true
     manaBar:ClearAllPoints()
     manaBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
@@ -199,7 +200,7 @@ function addon.unitFrames.player:adjustManaBar()
         end)
     end
     
-    addon.combatSafe:adjustPlayerManaBar(manaBar, HealthBarsContainer, offsetY)
+    addon.CombatSafe:adjustPlayerManaBar(manaBar, HealthBarsContainer, offsetY)
 end
 
 function addon.unitFrames.player:hideManaText()
@@ -213,6 +214,13 @@ function addon.unitFrames.player:hideManaText()
             addon:hideFrame(region)
         end
     end
+end
+
+addon.CombatSafe.adjustSecondaryPowerBar = function(self, staggerBar, HealthBarsContainer, offsetY)
+    staggerBar:ClearAllPoints()
+    staggerBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
+    staggerBar:SetPoint("TOPRIGHT", HealthBarsContainer, "BOTTOMRIGHT", 0, offsetY)
+    return true
 end
 
 function addon.unitFrames.player:handleSecondaryPowerBar()
@@ -246,9 +254,7 @@ function addon.unitFrames.player:handleSecondaryPowerBar()
         -- Position stagger bar
         local HealthBarsContainer = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer
         if HealthBarsContainer then
-            staggerBar:ClearAllPoints()
-            staggerBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
-            staggerBar:SetPoint("TOPRIGHT", HealthBarsContainer, "BOTTOMRIGHT", 0, offsetY)
+            addon.CombatSafe:adjustSecondaryPowerBar(staggerBar, HealthBarsContainer, offsetY)
         end
         
         -- Hide text on stagger bar
@@ -259,6 +265,15 @@ function addon.unitFrames.player:handleSecondaryPowerBar()
             end
         end
     end
+end
+
+addon.CombatSafe.adjustRuneFramePosition = function(self, runeFrame, HealthBarsContainer, runeScale, runeOffsetX, runeOffsetY)
+    runeFrame:SetScale(runeScale)
+    runeFrame.sadunitframes_settingPosition = true
+    runeFrame:ClearAllPoints()
+    runeFrame:SetPoint("TOP", HealthBarsContainer, "BOTTOM", runeOffsetX, runeOffsetY)
+    runeFrame.sadunitframes_settingPosition = false
+    return true
 end
 
 function addon.unitFrames.player:adjustRuneFrame()
@@ -281,25 +296,25 @@ function addon.unitFrames.player:adjustRuneFrame()
             hooksecurefunc(runeFrame, "SetPoint", function(self)
                 if self.sadunitframes_settingPosition then return end
                 C_Timer.After(0, function()
-                    self.sadunitframes_settingPosition = true
-                    self:ClearAllPoints()
-                    self:SetPoint("TOP", HealthBarsContainer, "BOTTOM", runeOffsetX, runeOffsetY)
-                    self.sadunitframes_settingPosition = false
+                    addon.CombatSafe:adjustRuneFramePosition(self, HealthBarsContainer, runeScale, runeOffsetX, runeOffsetY)
                 end)
             end)
         end
         
-        -- Set scale (makes it smaller/narrower)
-        runeFrame:SetScale(runeScale)
-        
-        -- Position below health bar
-        runeFrame.sadunitframes_settingPosition = true
-        runeFrame:ClearAllPoints()
-        runeFrame:SetPoint("TOP", HealthBarsContainer, "BOTTOM", runeOffsetX, runeOffsetY)
-        runeFrame.sadunitframes_settingPosition = false
+        -- Set scale and position
+        addon.CombatSafe:adjustRuneFramePosition(runeFrame, HealthBarsContainer, runeScale, runeOffsetX, runeOffsetY)
         
         addon:debug("RuneFrame adjusted with scale: " .. tostring(runeScale))
     end
+end
+
+addon.CombatSafe.adjustEssenceFramePosition = function(self, essenceFrame, HealthBarsContainer, essenceScale, essenceOffsetX, essenceOffsetY)
+    essenceFrame:SetScale(essenceScale)
+    essenceFrame.sadunitframes_settingPosition = true
+    essenceFrame:ClearAllPoints()
+    essenceFrame:SetPoint("TOP", HealthBarsContainer, "BOTTOM", essenceOffsetX, essenceOffsetY)
+    essenceFrame.sadunitframes_settingPosition = false
+    return true
 end
 
 function addon.unitFrames.player:adjustEssenceFrame()
@@ -322,22 +337,13 @@ function addon.unitFrames.player:adjustEssenceFrame()
             hooksecurefunc(essenceFrame, "SetPoint", function(self)
                 if self.sadunitframes_settingPosition then return end
                 C_Timer.After(0, function()
-                    self.sadunitframes_settingPosition = true
-                    self:ClearAllPoints()
-                    self:SetPoint("TOP", HealthBarsContainer, "BOTTOM", essenceOffsetX, essenceOffsetY)
-                    self.sadunitframes_settingPosition = false
+                    addon.CombatSafe:adjustEssenceFramePosition(self, HealthBarsContainer, essenceScale, essenceOffsetX, essenceOffsetY)
                 end)
             end)
         end
         
-        -- Set scale (makes it smaller/narrower)
-        essenceFrame:SetScale(essenceScale)
-        
-        -- Position below health bar
-        essenceFrame.sadunitframes_settingPosition = true
-        essenceFrame:ClearAllPoints()
-        essenceFrame:SetPoint("TOP", HealthBarsContainer, "BOTTOM", essenceOffsetX, essenceOffsetY)
-        essenceFrame.sadunitframes_settingPosition = false
+        -- Set scale and position
+        addon.CombatSafe:adjustEssenceFramePosition(essenceFrame, HealthBarsContainer, essenceScale, essenceOffsetX, essenceOffsetY)
         
         addon:debug("EssencePlayerFrame adjusted with scale: " .. tostring(essenceScale))
     end
@@ -386,6 +392,13 @@ function addon.unitFrames.player:hideFrameFlash()
     end
 end
 
+addon.CombatSafe.positionCombatIndicator = function(self, combatIndicator, HealthBarsContainer, healthBarHeight)
+    combatIndicator:SetSize(healthBarHeight, healthBarHeight)
+    combatIndicator:ClearAllPoints()
+    combatIndicator:SetPoint("RIGHT", HealthBarsContainer, "LEFT", 0, 0)
+    return true
+end
+
 function addon.unitFrames.player:createCombatIndicator()
     addon:debug("Creating combat indicator")
     
@@ -420,10 +433,8 @@ function addon.unitFrames.player:createCombatIndicator()
     local healthBarHeight = HealthBarsContainer:GetHeight()
     addon:debug("Health bar height: " .. tostring(healthBarHeight))
     
-    -- Set the frame size to match health bar height
-    combatIndicator:SetSize(healthBarHeight, healthBarHeight)
-    combatIndicator:ClearAllPoints()
-    combatIndicator:SetPoint("RIGHT", HealthBarsContainer, "LEFT", 0, 0)
+    -- Set the frame size and position
+    addon.CombatSafe:positionCombatIndicator(combatIndicator, HealthBarsContainer, healthBarHeight)
     
     -- Register for combat events
     if not combatIndicator.eventRegistered then
