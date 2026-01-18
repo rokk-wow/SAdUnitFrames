@@ -178,9 +178,11 @@ function addon.unitFrames.player:hidePvpIcon()
     
     local pvpIcon = PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual.PrestigePortrait
     local prestigeBadge = PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual.PrestigeBadge
+    local pvpIconFrame = PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual.PVPIcon
     
     addon:hideFrame(pvpIcon)
     addon:hideFrame(prestigeBadge)
+    addon:hideFrame(pvpIconFrame)
 end
 
 function addon.unitFrames.player:adjustManaBar()
