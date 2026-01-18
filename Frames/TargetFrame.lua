@@ -5,6 +5,16 @@ local addon = SAdCore:GetAddon(addonName)
 addon.unitFrames = addon.unitFrames or {}
 addon.unitFrames.target = addon.unitFrames.target or {}
 
+addon.combatSafe.adjustTargetManaBar = function(self, manaBar, HealthBarsContainer, offsetY)
+    manaBar.sadunitframes_settingPosition = true
+    manaBar:ClearAllPoints()
+    manaBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
+    manaBar:SetPoint("TOPRIGHT", HealthBarsContainer, "BOTTOMRIGHT", 0, offsetY)
+    manaBar:SetHeight(12)
+    manaBar.sadunitframes_settingPosition = false
+    return true
+end
+
 function addon.unitFrames.target:removePortrait()
     addon:debug("Removing target portrait")
     
@@ -88,19 +98,21 @@ function addon.unitFrames.target:addBackground()
     end
 end
 
-function addon.unitFrames.target:adjustHealthBar()
-    addon:debug("Adjusting target health bar height")
-    
-    if InCombatLockdown() then return end
-    
-    local healthBarHeight = 19
-    
+addon.combatSafe.adjustTargetHealthBar = function(self, healthBarHeight)
     local HealthBarsContainer = TargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer
     
     if HealthBarsContainer then
         HealthBarsContainer:SetHeight(healthBarHeight)
-        addon:debug("Target HealthBarsContainer height set to: " .. tostring(healthBarHeight))
+        self:debug("Target HealthBarsContainer height set to: " .. tostring(healthBarHeight))
     end
+    return true
+end
+
+function addon.unitFrames.target:adjustHealthBar()
+    addon:debug("Adjusting target health bar height")
+    
+    local healthBarHeight = 19
+    addon.combatSafe:adjustTargetHealthBar(healthBarHeight)
 end
 
 function addon.unitFrames.target:adjustText()
@@ -148,15 +160,7 @@ function addon.unitFrames.target:adjustManaBar()
         end)
     end
     
-    -- Skip during combat - positioning is protected
-    if InCombatLockdown() then return end
-    
-    manaBar.sadunitframes_settingPosition = true
-    manaBar:ClearAllPoints()
-    manaBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
-    manaBar:SetPoint("TOPRIGHT", HealthBarsContainer, "BOTTOMRIGHT", 0, offsetY)
-    manaBar:SetHeight(12)
-    manaBar.sadunitframes_settingPosition = false
+    addon.combatSafe:adjustTargetManaBar(manaBar, HealthBarsContainer, offsetY)
 end
 
 function addon.unitFrames.target:hideManaText()

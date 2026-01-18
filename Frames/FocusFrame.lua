@@ -5,6 +5,16 @@ local addon = SAdCore:GetAddon(addonName)
 addon.unitFrames = addon.unitFrames or {}
 addon.unitFrames.focus = addon.unitFrames.focus or {}
 
+addon.combatSafe.adjustFocusManaBar = function(self, manaBar, HealthBarsContainer, offsetY)
+    manaBar.sadunitframes_settingPosition = true
+    manaBar:ClearAllPoints()
+    manaBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
+    manaBar:SetPoint("TOPRIGHT", HealthBarsContainer, "BOTTOMRIGHT", 0, offsetY)
+    manaBar:SetHeight(12)
+    manaBar.sadunitframes_settingPosition = false
+    return true
+end
+
 function addon.unitFrames.focus:removePortrait()
     addon:debug("Removing focus portrait")
     
@@ -142,15 +152,7 @@ function addon.unitFrames.focus:adjustManaBar()
         end)
     end
     
-    -- Skip during combat - positioning is protected
-    if InCombatLockdown() then return end
-    
-    manaBar.sadunitframes_settingPosition = true
-    manaBar:ClearAllPoints()
-    manaBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
-    manaBar:SetPoint("TOPRIGHT", HealthBarsContainer, "BOTTOMRIGHT", 0, offsetY)
-    manaBar:SetHeight(12)
-    manaBar.sadunitframes_settingPosition = false
+    addon.combatSafe:adjustFocusManaBar(manaBar, HealthBarsContainer, offsetY)
 end
 
 function addon.unitFrames.focus:hideManaText()

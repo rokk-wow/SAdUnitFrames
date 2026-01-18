@@ -14,26 +14,6 @@ addon.vars = {
     backgroundColor = "#000000AA",
 }
 
-addon.combatQueue = addon.combatQueue or {}
-
-function addon:queueForAfterCombat(func)
-    if not InCombatLockdown() then
-        func()
-    else
-        table.insert(self.combatQueue, func)
-    end
-end
-
-function addon:processCombatQueue()
-    if InCombatLockdown() then return end
-    
-    for _, func in ipairs(self.combatQueue) do
-        pcall(func)
-    end
-    
-    self.combatQueue = {}
-end
-
 function addon:LoadConfig()
     self.config.version = "1.0"
     self.author = "Rôkk-Wyrmrest Accord"
@@ -215,34 +195,41 @@ function addon:addBackground(bar)
     end
 end
 
-function addon:hideFrame(frame)
-    if not frame then return end
+addon.combatSafe.hideFrame = function(self, frame)
+    if not frame then return false end
     
-    local function doHide()
-        if not frame.sadunitframes_hideHooked then
-            frame.sadunitframes_hideHooked = true
-            hooksecurefunc(frame, "Show", function(self)
-                if self.sadunitframes_hideHooked then
-                    self:SetAlpha(0)
-                end
-            end)
-        end
-        
-        local success, err = pcall(function()
-            frame:Hide()
+    if not frame.sadunitframes_hideHooked then
+        frame.sadunitframes_hideHooked = true
+        hooksecurefunc(frame, "Show", function(self)
+            if self.sadunitframes_hideHooked then
+                self:SetAlpha(0)
+            end
         end)
-        
-        frame:SetAlpha(0)
     end
     
-    addon:queueForAfterCombat(doHide)
+    local success, err = pcall(function()
+        frame:Hide()
+    end)
+    
+    frame:SetAlpha(0)
+    return true
+end
+
+function addon:hideFrame(frame)
+    if not frame then return end
+    self.combatSafe:hideFrame(frame)
+end
+
+addon.combatSafe.setFramePoint = function(self, frame, ...)
+    if not frame then return false end
+    frame:ClearAllPoints()
+    frame:SetPoint(...)
+    return true
 end
 
 function addon:setFramePoint(frame, ...)
     if not frame then return end
-    if InCombatLockdown() then return end
-    frame:ClearAllPoints()
-    frame:SetPoint(...)
+    self.combatSafe:setFramePoint(frame, ...)
 end
 
 function addon:getTexturePath(textureName)
