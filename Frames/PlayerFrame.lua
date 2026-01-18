@@ -12,7 +12,6 @@ function addon.unitFrames.player:removePortrait()
     local portraitMask = PlayerFrame.PlayerFrameContainer.PlayerPortraitMask
     local healthBarMask = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer.HealthBarMask
     local frameTexture = PlayerFrame.PlayerFrameContainer.FrameTexture
-    local statusTexture = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.StatusTexture
     local portraitCornerIcon = PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual.PlayerPortraitCornerIcon
     local alternatePowerFrameTexture = PlayerFrame.PlayerFrameContainer.AlternatePowerFrameTexture
     
@@ -28,12 +27,38 @@ function addon.unitFrames.player:removePortrait()
     addon:hideFrame(portraitMask)
     addon:hideFrame(healthBarMask)
     addon:hideFrame(frameTexture)
-    addon:hideFrame(statusTexture)
     addon:hideFrame(portraitCornerIcon)
     addon:hideFrame(alternatePowerFrameTexture)
     
     if restLoop and nameText then
         addon:setFramePoint(restLoop, "BOTTOMLEFT", PlayerName, "RIGHT", -5, 0)
+    end
+end
+
+function addon.unitFrames.player:hidePlayerFrameStatusTexture()
+    addon:debug("Hiding player frame status texture")
+    
+    if PlayerFrame and PlayerFrame.PlayerFrameContent and PlayerFrame.PlayerFrameContent.PlayerFrameContentMain then
+        local statusTexture = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.StatusTexture
+        if statusTexture then
+            statusTexture:SetAlpha(0)
+            statusTexture:Hide()
+            
+            if not statusTexture.sadunitframes_hideHooked then
+                statusTexture.sadunitframes_hideHooked = true
+                hooksecurefunc(statusTexture, "Show", function(self)
+                    self:SetAlpha(0)
+                    self:Hide()
+                end)
+                hooksecurefunc(statusTexture, "SetAlpha", function(self, alpha)
+                    if alpha > 0 then
+                        C_Timer.After(0, function()
+                            self:SetAlpha(0)
+                        end)
+                    end
+                end)
+            end
+        end
     end
 end
 
@@ -117,7 +142,34 @@ function addon.unitFrames.player:hideHitIndicator()
     addon:debug("Hiding player hit indicator")
     
     local hitIndicator = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HitIndicator
+    local hitFlash = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer.HealthBar.AnimatedLossBar
+    
     addon:hideFrame(hitIndicator)
+    
+    -- Also hide the animated loss bar that can show yellow
+    if hitFlash then
+        addon:hideFrame(hitFlash)
+    end
+    
+    -- Hide all textures on the HitIndicator in case they're separate
+    if hitIndicator then
+        local regions = {hitIndicator:GetRegions()}
+        for _, region in pairs(regions) do
+            if region.GetTexture then
+                addon:hideFrame(region)
+            end
+        end
+    end
+end
+
+function addon.unitFrames.player:hidePvpIcon()
+    addon:debug("Hiding player PVP icon")
+    
+    local pvpIcon = PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual.PrestigePortrait
+    local prestigeBadge = PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual.PrestigeBadge
+    
+    addon:hideFrame(pvpIcon)
+    addon:hideFrame(prestigeBadge)
 end
 
 function addon.unitFrames.player:adjustManaBar()
@@ -136,6 +188,9 @@ function addon.unitFrames.player:adjustManaBar()
             end)
         end)
     end
+    
+    -- Skip during combat - positioning is protected
+    if InCombatLockdown() then return end
     
     manaBar.sadunitframes_settingPosition = true
     manaBar:ClearAllPoints()
@@ -284,4 +339,118 @@ function addon.unitFrames.player:adjustEssenceFrame()
         
         addon:debug("EssencePlayerFrame adjusted with scale: " .. tostring(essenceScale))
     end
+end
+
+function addon.unitFrames.player:hideCombatGlow()
+    addon:debug("Hiding combat glow on player frame")
+    
+    -- Hide the combat flash effect
+    local combatFlash = PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual.CombatFlash
+    if combatFlash then
+        addon:hideFrame(combatFlash)
+    end
+    
+    -- Also hide the attack glow
+    local attackGlow = PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual.PlayerAttackGlow
+    if attackGlow then
+        addon:hideFrame(attackGlow)
+    end
+end
+
+function addon.unitFrames.player:hideFrameFlash()
+    addon:debug("Hiding frame flash on player frame")
+    
+    -- Hide the FrameFlash from PlayerFrameContainer
+    local frameFlash = PlayerFrame.PlayerFrameContainer.FrameFlash
+    if frameFlash then
+        frameFlash:SetAlpha(0)
+        frameFlash:Hide()
+        
+        -- Hook to keep it hidden
+        if not frameFlash.sadunitframes_hideHooked then
+            frameFlash.sadunitframes_hideHooked = true
+            hooksecurefunc(frameFlash, "Show", function(self)
+                self:SetAlpha(0)
+                self:Hide()
+            end)
+            hooksecurefunc(frameFlash, "SetAlpha", function(self, alpha)
+                if alpha > 0 then
+                    C_Timer.After(0, function()
+                        self:SetAlpha(0)
+                    end)
+                end
+            end)
+        end
+    end
+end
+
+function addon.unitFrames.player:createCombatIndicator()
+    addon:debug("Creating combat indicator")
+    
+    local HealthBarsContainer = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer
+    
+    -- Create the combat indicator frame if it doesn't exist
+    if not PlayerFrame.sadunitframes_combatIndicator then
+        local combatIndicator = CreateFrame("Frame", "SAdUnitFrames_PlayerCombatIndicator", PlayerFrame)
+        combatIndicator:SetFrameStrata("HIGH")
+        combatIndicator:SetFrameLevel(100)
+        
+        -- Create texture using the atlas texture coordinates
+        local texture = combatIndicator:CreateTexture(nil, "ARTWORK")
+        texture:SetSnapToPixelGrid(false)
+        texture:SetTexelSnappingBias(0)
+        texture:SetSize(22, 18) -- Adjust to match texture coordinate aspect ratio
+        texture:SetPoint("CENTER", combatIndicator, "CENTER")
+        texture:SetTexture("interface/questframe/questlogquesttypeicons2x", "TRILINEAR", "TRILINEAR")
+        texture:SetTexCoord(0.60, 0.7734375, 0.1953125, 0.3359375)
+        
+        combatIndicator.texture = texture
+        
+        PlayerFrame.sadunitframes_combatIndicator = combatIndicator
+        
+        addon:debug("Combat indicator frame created with name: SAdUnitFrames_PlayerCombatIndicator")
+    end
+    
+    local combatIndicator = PlayerFrame.sadunitframes_combatIndicator
+    
+    -- Position the indicator to the left of the health bar
+    -- Scale it to match health bar height
+    local healthBarHeight = HealthBarsContainer:GetHeight()
+    addon:debug("Health bar height: " .. tostring(healthBarHeight))
+    
+    -- Set the frame size to match health bar height
+    combatIndicator:SetSize(healthBarHeight, healthBarHeight)
+    combatIndicator:ClearAllPoints()
+    combatIndicator:SetPoint("RIGHT", HealthBarsContainer, "LEFT", 0, 0)
+    
+    -- Register for combat events
+    if not combatIndicator.eventRegistered then
+        combatIndicator:RegisterEvent("PLAYER_REGEN_DISABLED")
+        combatIndicator:RegisterEvent("PLAYER_REGEN_ENABLED")
+        combatIndicator:SetScript("OnEvent", function(self, event)
+            addon:debug("Combat event: " .. event)
+            if event == "PLAYER_REGEN_DISABLED" then
+                addon:debug("Entering combat - showing indicator")
+                self:Show()
+            elseif event == "PLAYER_REGEN_ENABLED" then
+                addon:debug("Leaving combat - hiding indicator")
+                self:Hide()
+            end
+        end)
+        combatIndicator.eventRegistered = true
+        addon:debug("Combat events registered")
+    end
+    
+    -- Set initial state
+    local inCombat = UnitAffectingCombat("player")
+    addon:debug("Initial combat state: " .. tostring(inCombat))
+    if inCombat then
+        combatIndicator:Show()
+        addon:debug("Showing combat indicator (initial state)")
+    else
+        combatIndicator:Hide()
+        addon:debug("Hiding combat indicator (initial state)")
+    end
+    
+    addon:debug("Combat indicator configured at position RIGHT of health bar with 0 offset")
 end

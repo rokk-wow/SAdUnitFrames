@@ -108,6 +108,9 @@ function addon.unitFrames.targettarget:adjustManaBar()
         end)
     end
     
+    -- Skip during combat - positioning is protected
+    if InCombatLockdown() then return end
+    
     manaBar.sadunitframes_settingPosition = true
     manaBar:ClearAllPoints()
     manaBar:SetPoint("TOPLEFT", healthBar, "BOTTOMLEFT", 0, offsetY)

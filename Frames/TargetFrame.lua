@@ -88,6 +88,21 @@ function addon.unitFrames.target:addBackground()
     end
 end
 
+function addon.unitFrames.target:adjustHealthBar()
+    addon:debug("Adjusting target health bar height")
+    
+    if InCombatLockdown() then return end
+    
+    local healthBarHeight = 19
+    
+    local HealthBarsContainer = TargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer
+    
+    if HealthBarsContainer then
+        HealthBarsContainer:SetHeight(healthBarHeight)
+        addon:debug("Target HealthBarsContainer height set to: " .. tostring(healthBarHeight))
+    end
+end
+
 function addon.unitFrames.target:adjustText()
     addon:debug("Adjusting target frame text")
     
@@ -133,6 +148,9 @@ function addon.unitFrames.target:adjustManaBar()
         end)
     end
     
+    -- Skip during combat - positioning is protected
+    if InCombatLockdown() then return end
+    
     manaBar.sadunitframes_settingPosition = true
     manaBar:ClearAllPoints()
     manaBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
@@ -158,6 +176,16 @@ end
 
 function addon.unitFrames.target:updateTexture()
     addon:debug("Updating target frame texture")
+end
+
+function addon.unitFrames.target:hidePvpIcon()
+    addon:debug("Hiding target PVP icon")
+    
+    local pvpIcon = TargetFrame.TargetFrameContent.TargetFrameContentContextual.PrestigePortrait
+    local prestigeBadge = TargetFrame.TargetFrameContent.TargetFrameContentContextual.PrestigeBadge
+    
+    addon:hideFrame(pvpIcon)
+    addon:hideFrame(prestigeBadge)
 end
 
 function addon.unitFrames.target:adjustEliteDragon()

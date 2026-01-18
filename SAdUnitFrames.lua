@@ -7,17 +7,37 @@ addon.savedVarsPerCharName = "SAdUnitFrames_Settings_Char"
 addon.compartmentFuncName = "SAdUnitFrames_Compartment_Func"
 addon.activeChatFilters = {}
 
--- Internal constants (not user-configurable)
 addon.vars = {
     borderWidth = 2,
     manaBarOffsetY = 2,
+    borderColor = "#000000FF",
+    backgroundColor = "#000000AA",
 }
+
+addon.combatQueue = addon.combatQueue or {}
+
+function addon:queueForAfterCombat(func)
+    if not InCombatLockdown() then
+        func()
+    else
+        table.insert(self.combatQueue, func)
+    end
+end
+
+function addon:processCombatQueue()
+    if InCombatLockdown() then return end
+    
+    for _, func in ipairs(self.combatQueue) do
+        pcall(func)
+    end
+    
+    self.combatQueue = {}
+end
 
 function addon:LoadConfig()
     self.config.version = "1.0"
     self.author = "Rôkk-Wyrmrest Accord"
 
-    -- Available textures
     local textures = {
         {value = "Blizzard", label = "Blizzard (Default)"},
         {value = "Minimalist", label = "Minimalist"},
@@ -57,18 +77,6 @@ function addon:LoadConfig()
                     options = textures,
                     onValueChange = self.updateAllFrames
                 },
-                {
-                    type = "colorPicker",
-                    name = "borderColor",
-                    default = "#000000FF",
-                    onValueChange = self.updateAllFrames
-                },
-                {
-                    type = "colorPicker",
-                    name = "backgroundColor",
-                    default = "#000000AA",
-                    onValueChange = self.updateAllFrames
-                },
             }
         }
 end
@@ -94,7 +102,6 @@ function addon:getUnitColor(frameType)
     addon:debug("Getting color for unit: " .. unitToken)
     addon:debug("UnitIsPlayer: " .. tostring(UnitIsPlayer(unitToken)))
     
-    -- For player unit, always use class color
     if unitToken == "player" then
         local _, classFileName = UnitClass(unitToken)
         if classFileName and RAID_CLASS_COLORS[classFileName] then
@@ -104,7 +111,6 @@ function addon:getUnitColor(frameType)
         end
     end
     
-    -- For other players
     if UnitIsPlayer(unitToken) then
         local _, classFileName = UnitClass(unitToken)
         addon:debug("Target is player, class: " .. tostring(classFileName))
@@ -112,6 +118,18 @@ function addon:getUnitColor(frameType)
             local classColor = RAID_CLASS_COLORS[classFileName]
             addon:debug("Target class color: " .. classColor.r .. ", " .. classColor.g .. ", " .. classColor.b)
             return classColor.r, classColor.g, classColor.b
+        end
+    end
+    
+    if not UnitIsPlayer(unitToken) and UnitIsFriend("player", unitToken) then
+        if addon.currentZone == "dungeon" or addon.currentZone == "raid" then
+            local _, classFileName = UnitClass(unitToken)
+            addon:debug("Friendly NPC in instance, class: " .. tostring(classFileName))
+            if classFileName and RAID_CLASS_COLORS[classFileName] then
+                local classColor = RAID_CLASS_COLORS[classFileName]
+                addon:debug("NPC class color: " .. classColor.r .. ", " .. classColor.g .. ", " .. classColor.b)
+                return classColor.r, classColor.g, classColor.b
+            end
         end
     end
     
@@ -129,7 +147,7 @@ function addon:addBorder(bar)
     if not bar then return end
     
     local size = self.vars.borderWidth
-    local colorHex = self.settings.frameStyle.borderColor
+    local colorHex = self.vars.borderColor
     local r, g, b, a = self:hexToRGB(colorHex)
     
     local borders = bar.SAdUnitFrames_Borders
@@ -184,7 +202,7 @@ end
 function addon:addBackground(bar)
     if not bar then return end
     
-    local colorHex = self.settings.frameStyle.backgroundColor
+    local colorHex = self.vars.backgroundColor
     local r, g, b, a = self:hexToRGB(colorHex)
     
     if bar.SAdUnitFrames_Background then
@@ -200,22 +218,29 @@ end
 function addon:hideFrame(frame)
     if not frame then return end
     
-    if not frame.sadunitframes_hideHooked then
-        frame.sadunitframes_hideHooked = true
-        hooksecurefunc(frame, "Show", function(self)
-            if self.sadunitframes_hideHooked then
-                self:Hide()
-                self:SetAlpha(0)
-            end
+    local function doHide()
+        if not frame.sadunitframes_hideHooked then
+            frame.sadunitframes_hideHooked = true
+            hooksecurefunc(frame, "Show", function(self)
+                if self.sadunitframes_hideHooked then
+                    self:SetAlpha(0)
+                end
+            end)
+        end
+        
+        local success, err = pcall(function()
+            frame:Hide()
         end)
+        
+        frame:SetAlpha(0)
     end
     
-    frame:Hide()
-    frame:SetAlpha(0)
+    addon:queueForAfterCombat(doHide)
 end
 
 function addon:setFramePoint(frame, ...)
     if not frame then return end
+    if InCombatLockdown() then return end
     frame:ClearAllPoints()
     frame:SetPoint(...)
 end
@@ -252,7 +277,16 @@ end)
 
 addon:RegisterEvent("PLAYER_TARGET_CHANGED", function()
     addon:updateUnitFrame("Target")
-    addon:updateUnitFrame("TargetTarget")
+end)
+
+addon:RegisterEvent("PLAYER_FOCUS_CHANGED", function()
+    addon:updateUnitFrame("Focus")
+end)
+
+addon:RegisterEvent("UNIT_AURA", function(event, unit)
+    if unit == "focus" then
+        addon.unitFrames.focus:hideBuffsAndDebuffs()
+    end
 end)
 
 addon:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", function()
