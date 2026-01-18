@@ -14,7 +14,7 @@ addon.vars = {
     backgroundColor = "#000000AA",
 }
 
-function addon:LoadConfig()
+function addon:Initialize()
     self.config.version = "1.0"
     self.author = "Rôkk-Wyrmrest Accord"
 
@@ -59,12 +59,49 @@ function addon:LoadConfig()
                 },
             }
         }
+    
+    -- Register events
+    self:RegisterEvent("PLAYER_ENTERING_WORLD", function()
+        local attempts = 0
+        local function tryUpdate()
+            attempts = attempts + 1
+            if UnitClass("player") then
+                addon:updateAllFrames()
+            elseif attempts < 20 then
+                C_Timer.After(0.1, tryUpdate)
+            else
+                addon:updateAllFrames()
+            end
+        end
+        C_Timer.After(0.1, tryUpdate)
+    end)
+    
+    self:RegisterEvent("PLAYER_TARGET_CHANGED", function()
+        addon:updateUnitFrame("Target")
+    end)
+    
+    self:RegisterEvent("PLAYER_FOCUS_CHANGED", function()
+        addon:updateUnitFrame("Focus")
+    end)
+    
+    self:RegisterEvent("UNIT_AURA", function(event, unit)
+        if unit == "focus" then
+            addon.unitFrames.focus:hideBuffsAndDebuffs()
+        end
+    end)
+    
+    self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", function()
+        addon:Debug("Spec changed, updating player frame")
+        C_Timer.After(0.2, function()
+            addon:updateUnitFrame("Player")
+        end)
+    end)
 end
 
 function addon:updateUnitFrame(frameType)
     local frameTypeLower = frameType:lower()
     
-    addon:debug("Updating " .. frameTypeLower .. " frame")
+    addon:Debug("Updating " .. frameTypeLower .. " frame")
     
     local frameData = addon.unitFrames[frameTypeLower]
     if frameData then
@@ -79,24 +116,24 @@ end
 function addon:getUnitColor(frameType)
     local unitToken = frameType:lower()
     
-    addon:debug("Getting color for unit: " .. unitToken)
-    addon:debug("UnitIsPlayer: " .. tostring(UnitIsPlayer(unitToken)))
+    addon:Debug("Getting color for unit: " .. unitToken)
+    addon:Debug("UnitIsPlayer: " .. tostring(UnitIsPlayer(unitToken)))
     
     if unitToken == "player" then
         local _, classFileName = UnitClass(unitToken)
         if classFileName and RAID_CLASS_COLORS[classFileName] then
             local classColor = RAID_CLASS_COLORS[classFileName]
-            addon:debug("Player class color: " .. classColor.r .. ", " .. classColor.g .. ", " .. classColor.b)
+            addon:Debug("Player class color: " .. classColor.r .. ", " .. classColor.g .. ", " .. classColor.b)
             return classColor.r, classColor.g, classColor.b
         end
     end
     
     if UnitIsPlayer(unitToken) then
         local _, classFileName = UnitClass(unitToken)
-        addon:debug("Target is player, class: " .. tostring(classFileName))
+        addon:Debug("Target is player, class: " .. tostring(classFileName))
         if classFileName and RAID_CLASS_COLORS[classFileName] then
             local classColor = RAID_CLASS_COLORS[classFileName]
-            addon:debug("Target class color: " .. classColor.r .. ", " .. classColor.g .. ", " .. classColor.b)
+            addon:Debug("Target class color: " .. classColor.r .. ", " .. classColor.g .. ", " .. classColor.b)
             return classColor.r, classColor.g, classColor.b
         end
     end
@@ -104,19 +141,19 @@ function addon:getUnitColor(frameType)
     if not UnitIsPlayer(unitToken) and UnitIsFriend("player", unitToken) then
         if addon.currentZone == "dungeon" or addon.currentZone == "raid" then
             local _, classFileName = UnitClass(unitToken)
-            addon:debug("Friendly NPC in instance, class: " .. tostring(classFileName))
+            addon:Debug("Friendly NPC in instance, class: " .. tostring(classFileName))
             if classFileName and RAID_CLASS_COLORS[classFileName] then
                 local classColor = RAID_CLASS_COLORS[classFileName]
-                addon:debug("NPC class color: " .. classColor.r .. ", " .. classColor.g .. ", " .. classColor.b)
+                addon:Debug("NPC class color: " .. classColor.r .. ", " .. classColor.g .. ", " .. classColor.b)
                 return classColor.r, classColor.g, classColor.b
             end
         end
     end
     
     local r, g, b = UnitSelectionColor(unitToken)
-    addon:debug("UnitSelectionColor: " .. tostring(r) .. ", " .. tostring(g) .. ", " .. tostring(b))
+    addon:Debug("UnitSelectionColor: " .. tostring(r) .. ", " .. tostring(g) .. ", " .. tostring(b))
     if not r or (r == 0 and g == 0 and b == 0) then
-        addon:debug("Using fallback white color")
+        addon:Debug("Using fallback white color")
         return 1, 1, 1
     end
     return r, g, b
@@ -127,7 +164,7 @@ function addon:addBorder(bar)
     
     local size = self.vars.borderWidth
     local colorHex = self.vars.borderColor
-    local r, g, b, a = self:hexToRGB(colorHex)
+    local r, g, b, a = self:HexToRGB(colorHex)
     
     local borders = bar.SAdUnitFrames_Borders
     
@@ -182,7 +219,7 @@ function addon:addBackground(bar)
     if not bar then return end
     
     local colorHex = self.vars.backgroundColor
-    local r, g, b, a = self:hexToRGB(colorHex)
+    local r, g, b, a = self:HexToRGB(colorHex)
     
     if bar.SAdUnitFrames_Background then
         bar.SAdUnitFrames_Background:SetColorTexture(r, g, b, a)
@@ -194,43 +231,33 @@ function addon:addBackground(bar)
     end
 end
 
-addon.CombatSafe = addon.CombatSafe or {}
-
-addon.CombatSafe.hideFrame = function(self, frame)
-    if not frame then return false end
-    
-    if not frame.sadunitframes_hideHooked then
-        frame.sadunitframes_hideHooked = true
-        hooksecurefunc(frame, "Show", function(self)
-            if self.sadunitframes_hideHooked then
-                self:SetAlpha(0)
-            end
-        end)
-    end
-    
-    local success, err = pcall(function()
-        frame:Hide()
-    end)
-    
-    frame:SetAlpha(0)
-    return true
-end
-
-addon.CombatSafe.setFramePoint = function(self, frame, ...)
-    if not frame then return false end
-    frame:ClearAllPoints()
-    frame:SetPoint(...)
-    return true
-end
-
 function addon:hideFrame(frame)
     if not frame then return end
-    self.CombatSafe:hideFrame(frame)
+    self:CombatSafe(function()
+        if not frame.sadunitframes_hideHooked then
+            frame.sadunitframes_hideHooked = true
+            hooksecurefunc(frame, "Show", function(self)
+                if self.sadunitframes_hideHooked then
+                    self:SetAlpha(0)
+                end
+            end)
+        end
+        
+        local success, err = pcall(function()
+            frame:Hide()
+        end)
+        
+        frame:SetAlpha(0)
+    end)
 end
 
 function addon:setFramePoint(frame, ...)
     if not frame then return end
-    self.CombatSafe:setFramePoint(frame, ...)
+    local args = {...}
+    self:CombatSafe(function()
+        frame:ClearAllPoints()
+        frame:SetPoint(unpack(args))
+    end)
 end
 
 function addon:getTexturePath(textureName)
@@ -242,44 +269,8 @@ function addon:getTexturePath(textureName)
 end
 
 function addon:updateAllFrames()
-    addon:debug("Updating all frames")
+    addon:Debug("Updating all frames")
     for _, frameType in ipairs({"Player", "Target", "TargetTarget", "Pet", "Focus", "FocusTarget"}) do
         self:updateUnitFrame(frameType)
     end
 end
-
-addon:RegisterEvent("PLAYER_ENTERING_WORLD", function()
-    local attempts = 0
-    local function tryUpdate()
-        attempts = attempts + 1
-        if UnitClass("player") then
-            addon:updateAllFrames()
-        elseif attempts < 20 then
-            C_Timer.After(0.1, tryUpdate)
-        else
-            addon:updateAllFrames()
-        end
-    end
-    C_Timer.After(0.1, tryUpdate)
-end)
-
-addon:RegisterEvent("PLAYER_TARGET_CHANGED", function()
-    addon:updateUnitFrame("Target")
-end)
-
-addon:RegisterEvent("PLAYER_FOCUS_CHANGED", function()
-    addon:updateUnitFrame("Focus")
-end)
-
-addon:RegisterEvent("UNIT_AURA", function(event, unit)
-    if unit == "focus" then
-        addon.unitFrames.focus:hideBuffsAndDebuffs()
-    end
-end)
-
-addon:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", function()
-    addon:debug("Spec changed, updating player frame")
-    C_Timer.After(0.2, function()
-        addon:updateUnitFrame("Player")
-    end)
-end)

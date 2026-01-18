@@ -4,20 +4,20 @@ local addon = SAdCore:GetAddon(addonName)
 
 addon.unitFrames = addon.unitFrames or {}
 addon.unitFrames.focus = addon.unitFrames.focus or {}
-addon.CombatSafe = addon.CombatSafe or {}
 
-addon.CombatSafe.adjustFocusManaBar = function(self, manaBar, HealthBarsContainer, offsetY)
-    manaBar.sadunitframes_settingPosition = true
-    manaBar:ClearAllPoints()
-    manaBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
-    manaBar:SetPoint("TOPRIGHT", HealthBarsContainer, "BOTTOMRIGHT", 0, offsetY)
-    manaBar:SetHeight(12)
-    manaBar.sadunitframes_settingPosition = false
-    return true
+function addon:adjustFocusManaBar(manaBar, HealthBarsContainer, offsetY)
+    self:CombatSafe(function()
+        manaBar.sadunitframes_settingPosition = true
+        manaBar:ClearAllPoints()
+        manaBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
+        manaBar:SetPoint("TOPRIGHT", HealthBarsContainer, "BOTTOMRIGHT", 0, offsetY)
+        manaBar:SetHeight(12)
+        manaBar.sadunitframes_settingPosition = false
+    end)
 end
 
 function addon.unitFrames.focus:removePortrait()
-    addon:debug("Removing focus portrait")
+    addon:Debug("Removing focus portrait")
     
     local portrait = FocusFrame.TargetFrameContainer.Portrait
     local portraitMask = FocusFrame.TargetFrameContainer.PortraitMask
@@ -30,8 +30,8 @@ function addon.unitFrames.focus:removePortrait()
     local HealthBarsContainer = FocusFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer
     local nameText = FocusFrame.TargetFrameContent.TargetFrameContentMain.Name
     
-    addon:debug("Portrait frame: " .. tostring(portrait))
-    addon:debug("PortraitMask frame: " .. tostring(portraitMask))
+    addon:Debug("Portrait frame: " .. tostring(portrait))
+    addon:Debug("PortraitMask frame: " .. tostring(portraitMask))
     
     addon:hideFrame(portrait)
     addon:hideFrame(portraitMask)
@@ -43,10 +43,10 @@ function addon.unitFrames.focus:removePortrait()
 end
 
 function addon.unitFrames.focus:setClassColor()
-    addon:debug("Setting focus frame class color")
+    addon:Debug("Setting focus frame class color")
     local healthBar = FocusFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar
     
-    addon:debug("Focus healthBar: " .. tostring(healthBar))
+    addon:Debug("Focus healthBar: " .. tostring(healthBar))
     
     -- Set up color hook first (before anything else)
     if not healthBar.sadunitframes_colorHooked then
@@ -65,7 +65,7 @@ function addon.unitFrames.focus:setClassColor()
     
     -- Only apply color if focus exists
     if not UnitExists("focus") then 
-        addon:debug("Focus unit does not exist, skipping color update")
+        addon:Debug("Focus unit does not exist, skipping color update")
         return 
     end
     
@@ -81,7 +81,7 @@ function addon.unitFrames.focus:setClassColor()
 end
 
 function addon.unitFrames.focus:addBorder()
-    addon:debug("Adding focus frame border")
+    addon:Debug("Adding focus frame border")
     
     local healthBar = FocusFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar
     local manaBar = FocusFrame.TargetFrameContent.TargetFrameContentMain.ManaBar
@@ -94,7 +94,7 @@ function addon.unitFrames.focus:addBorder()
 end
 
 function addon.unitFrames.focus:addBackground()
-    addon:debug("Adding focus frame background")
+    addon:Debug("Adding focus frame background")
     
     local healthBar = FocusFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar
     local manaBar = FocusFrame.TargetFrameContent.TargetFrameContentMain.ManaBar
@@ -107,7 +107,7 @@ function addon.unitFrames.focus:addBackground()
 end
 
 function addon.unitFrames.focus:adjustText()
-    addon:debug("Adjusting focus frame text")
+    addon:Debug("Adjusting focus frame text")
     
     local HealthBarsContainer = FocusFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer
     local nameText = FocusFrame.TargetFrameContent.TargetFrameContentMain.Name
@@ -135,7 +135,7 @@ function addon.unitFrames.focus:adjustText()
 end
 
 function addon.unitFrames.focus:adjustManaBar()
-    addon:debug("Adjusting focus mana bar position")
+    addon:Debug("Adjusting focus mana bar position")
     
     local HealthBarsContainer = FocusFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer
     local manaBar = FocusFrame.TargetFrameContent.TargetFrameContentMain.ManaBar
@@ -153,11 +153,11 @@ function addon.unitFrames.focus:adjustManaBar()
         end)
     end
     
-    addon.CombatSafe:adjustFocusManaBar(manaBar, HealthBarsContainer, offsetY)
+    addon:adjustFocusManaBar(manaBar, HealthBarsContainer, offsetY)
 end
 
 function addon.unitFrames.focus:hideManaText()
-    addon:debug("Hiding focus mana text")
+    addon:Debug("Hiding focus mana text")
     
     local manaBar = FocusFrame.TargetFrameContent.TargetFrameContentMain.ManaBar
     
@@ -172,7 +172,7 @@ function addon.unitFrames.focus:hideManaText()
 end
 
 function addon.unitFrames.focus:hideHealthText()
-    addon:debug("Hiding focus health text")
+    addon:Debug("Hiding focus health text")
     
     local healthBar = FocusFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar
     local rightText = FocusFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.RightText
@@ -192,7 +192,7 @@ function addon.unitFrames.focus:hideHealthText()
 end
 
 function addon.unitFrames.focus:hideLevelText()
-    addon:debug("Hiding focus level text")
+    addon:Debug("Hiding focus level text")
     
     local levelText = FocusFrame.TargetFrameContent.TargetFrameContentMain.LevelText
     
@@ -200,11 +200,11 @@ function addon.unitFrames.focus:hideLevelText()
 end
 
 function addon.unitFrames.focus:updateTexture()
-    addon:debug("Updating focus frame texture")
+    addon:Debug("Updating focus frame texture")
 end
 
 function addon.unitFrames.focus:hidePvpIcon()
-    addon:debug("Hiding focus PVP icon")
+    addon:Debug("Hiding focus PVP icon")
     
     local pvpIcon = FocusFrame.TargetFrameContent.TargetFrameContentContextual.PrestigePortrait
     local prestigeBadge = FocusFrame.TargetFrameContent.TargetFrameContentContextual.PrestigeBadge
@@ -224,7 +224,7 @@ function addon.unitFrames.focus:hideBuffsAndDebuffs()
 end
 
 function addon.unitFrames.focus:hideCastBar()
-    addon:debug("Hiding focus cast bar")
+    addon:Debug("Hiding focus cast bar")
     
     local castBar = FocusFrameSpellBar
     

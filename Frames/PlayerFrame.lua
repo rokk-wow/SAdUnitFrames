@@ -4,20 +4,20 @@ local addon = SAdCore:GetAddon(addonName)
 
 addon.unitFrames = addon.unitFrames or {}
 addon.unitFrames.player = addon.unitFrames.player or {}
-addon.CombatSafe = addon.CombatSafe or {}
 
-addon.CombatSafe.adjustPlayerManaBar = function(self, manaBar, HealthBarsContainer, offsetY)
-    manaBar.sadunitframes_settingPosition = true
-    manaBar:ClearAllPoints()
-    manaBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
-    manaBar:SetPoint("TOPRIGHT", HealthBarsContainer, "BOTTOMRIGHT", 0, offsetY)
-    manaBar:SetHeight(12)
-    manaBar.sadunitframes_settingPosition = false
-    return true
+function addon:adjustPlayerManaBar(manaBar, HealthBarsContainer, offsetY)
+    self:CombatSafe(function()
+        manaBar.sadunitframes_settingPosition = true
+        manaBar:ClearAllPoints()
+        manaBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
+        manaBar:SetPoint("TOPRIGHT", HealthBarsContainer, "BOTTOMRIGHT", 0, offsetY)
+        manaBar:SetHeight(12)
+        manaBar.sadunitframes_settingPosition = false
+    end)
 end
 
 function addon.unitFrames.player:removePortrait()
-    addon:debug("Removing player portrait")
+    addon:Debug("Removing player portrait")
     
     local portrait = PlayerFrame.PlayerFrameContainer.PlayerPortrait
     local portraitMask = PlayerFrame.PlayerFrameContainer.PlayerPortraitMask
@@ -31,8 +31,8 @@ function addon.unitFrames.player:removePortrait()
     local levelText = PlayerLevelText
     local restLoop = PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual.PlayerRestLoop
     
-    addon:debug("Portrait frame: " .. tostring(portrait))
-    addon:debug("PortraitMask frame: " .. tostring(portraitMask))
+    addon:Debug("Portrait frame: " .. tostring(portrait))
+    addon:Debug("PortraitMask frame: " .. tostring(portraitMask))
     
     addon:hideFrame(portrait)
     addon:hideFrame(portraitMask)
@@ -47,7 +47,7 @@ function addon.unitFrames.player:removePortrait()
 end
 
 function addon.unitFrames.player:hidePlayerFrameStatusTexture()
-    addon:debug("Hiding player frame status texture")
+    addon:Debug("Hiding player frame status texture")
     
     if PlayerFrame and PlayerFrame.PlayerFrameContent and PlayerFrame.PlayerFrameContent.PlayerFrameContentMain then
         local statusTexture = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.StatusTexture
@@ -102,7 +102,7 @@ function addon.unitFrames.player:setClassColor()
 end
 
 function addon.unitFrames.player:addBorder()
-    addon:debug("Adding player frame border")
+    addon:Debug("Adding player frame border")
     
     local healthBar = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer.HealthBar
     local manaBar = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.ManaBarArea.ManaBar
@@ -112,7 +112,7 @@ function addon.unitFrames.player:addBorder()
 end
 
 function addon.unitFrames.player:addBackground()
-    addon:debug("Adding player frame background")
+    addon:Debug("Adding player frame background")
     
     local healthBar = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer.HealthBar
     local manaBar = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.ManaBarArea.ManaBar
@@ -122,7 +122,7 @@ function addon.unitFrames.player:addBackground()
 end
 
 function addon.unitFrames.player:adjustText()
-    addon:debug("Adjusting player frame text")
+    addon:Debug("Adjusting player frame text")
     
     local HealthBarsContainer = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer
     local nameText = PlayerName
@@ -146,11 +146,11 @@ function addon.unitFrames.player:adjustText()
 end
 
 function addon.unitFrames.player:updateTexture()
-    addon:debug("Updating player frame texture")
+    addon:Debug("Updating player frame texture")
 end
 
 function addon.unitFrames.player:hideHitIndicator()
-    addon:debug("Hiding player hit indicator")
+    addon:Debug("Hiding player hit indicator")
     
     local hitIndicator = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HitIndicator
     local hitFlash = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer.HealthBar.AnimatedLossBar
@@ -174,7 +174,7 @@ function addon.unitFrames.player:hideHitIndicator()
 end
 
 function addon.unitFrames.player:hidePvpIcon()
-    addon:debug("Hiding player PVP icon")
+    addon:Debug("Hiding player PVP icon")
     
     local pvpIcon = PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual.PrestigePortrait
     local prestigeBadge = PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual.PrestigeBadge
@@ -186,7 +186,7 @@ function addon.unitFrames.player:hidePvpIcon()
 end
 
 function addon.unitFrames.player:adjustManaBar()
-    addon:debug("Adjusting player mana bar position")
+    addon:Debug("Adjusting player mana bar position")
     
     local HealthBarsContainer = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer
     local manaBar = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.ManaBarArea.ManaBar
@@ -202,11 +202,11 @@ function addon.unitFrames.player:adjustManaBar()
         end)
     end
     
-    addon.CombatSafe:adjustPlayerManaBar(manaBar, HealthBarsContainer, offsetY)
+    addon:adjustPlayerManaBar(manaBar, HealthBarsContainer, offsetY)
 end
 
 function addon.unitFrames.player:hideManaText()
-    addon:debug("Hiding player mana text")
+    addon:Debug("Hiding player mana text")
     
     local manaBar = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.ManaBarArea.ManaBar
     
@@ -218,21 +218,22 @@ function addon.unitFrames.player:hideManaText()
     end
 end
 
-addon.CombatSafe.adjustSecondaryPowerBar = function(self, staggerBar, HealthBarsContainer, offsetY)
-    staggerBar:ClearAllPoints()
-    staggerBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
-    staggerBar:SetPoint("TOPRIGHT", HealthBarsContainer, "BOTTOMRIGHT", 0, offsetY)
-    return true
+function addon:adjustSecondaryPowerBar(staggerBar, HealthBarsContainer, offsetY)
+    self:CombatSafe(function()
+        staggerBar:ClearAllPoints()
+        staggerBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
+        staggerBar:SetPoint("TOPRIGHT", HealthBarsContainer, "BOTTOMRIGHT", 0, offsetY)
+    end)
 end
 
 function addon.unitFrames.player:handleSecondaryPowerBar()
-    addon:debug("Handling secondary power bar (Stagger, etc.)")
+    addon:Debug("Handling secondary power bar (Stagger, etc.)")
     
     -- For Brewmaster monks - MonkStaggerBar
     local staggerBar = _G["MonkStaggerBar"]
     
     if staggerBar then
-        addon:debug("Found MonkStaggerBar")
+        addon:Debug("Found MonkStaggerBar")
         
         -- Positioning settings
         local offsetY = -8
@@ -256,7 +257,7 @@ function addon.unitFrames.player:handleSecondaryPowerBar()
         -- Position stagger bar
         local HealthBarsContainer = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer
         if HealthBarsContainer then
-            addon.CombatSafe:adjustSecondaryPowerBar(staggerBar, HealthBarsContainer, offsetY)
+            addon:adjustSecondaryPowerBar(staggerBar, HealthBarsContainer, offsetY)
         end
         
         -- Hide text on stagger bar
@@ -269,17 +270,18 @@ function addon.unitFrames.player:handleSecondaryPowerBar()
     end
 end
 
-addon.CombatSafe.adjustRuneFramePosition = function(self, runeFrame, HealthBarsContainer, runeScale, runeOffsetX, runeOffsetY)
-    runeFrame:SetScale(runeScale)
-    runeFrame.sadunitframes_settingPosition = true
-    runeFrame:ClearAllPoints()
-    runeFrame:SetPoint("TOP", HealthBarsContainer, "BOTTOM", runeOffsetX, runeOffsetY)
-    runeFrame.sadunitframes_settingPosition = false
-    return true
+function addon:adjustRuneFramePosition(runeFrame, HealthBarsContainer, runeScale, runeOffsetX, runeOffsetY)
+    self:CombatSafe(function()
+        runeFrame:SetScale(runeScale)
+        runeFrame.sadunitframes_settingPosition = true
+        runeFrame:ClearAllPoints()
+        runeFrame:SetPoint("TOP", HealthBarsContainer, "BOTTOM", runeOffsetX, runeOffsetY)
+        runeFrame.sadunitframes_settingPosition = false
+    end)
 end
 
 function addon.unitFrames.player:adjustRuneFrame()
-    addon:debug("Adjusting DK rune frame")
+    addon:Debug("Adjusting DK rune frame")
     
     -- Rune frame positioning settings
     local runeScale = 0.85
@@ -290,7 +292,7 @@ function addon.unitFrames.player:adjustRuneFrame()
     local HealthBarsContainer = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer
     
     if runeFrame and HealthBarsContainer then
-        addon:debug("Found RuneFrame")
+        addon:Debug("Found RuneFrame")
         
         -- Hook to maintain position
         if not runeFrame.sadunitframes_positionHooked then
@@ -298,29 +300,30 @@ function addon.unitFrames.player:adjustRuneFrame()
             hooksecurefunc(runeFrame, "SetPoint", function(self)
                 if self.sadunitframes_settingPosition then return end
                 C_Timer.After(0, function()
-                    addon.CombatSafe:adjustRuneFramePosition(self, HealthBarsContainer, runeScale, runeOffsetX, runeOffsetY)
+                    addon:adjustRuneFramePosition(self, HealthBarsContainer, runeScale, runeOffsetX, runeOffsetY)
                 end)
             end)
         end
         
         -- Set scale and position
-        addon.CombatSafe:adjustRuneFramePosition(runeFrame, HealthBarsContainer, runeScale, runeOffsetX, runeOffsetY)
+        addon:adjustRuneFramePosition(runeFrame, HealthBarsContainer, runeScale, runeOffsetX, runeOffsetY)
         
-        addon:debug("RuneFrame adjusted with scale: " .. tostring(runeScale))
+        addon:Debug("RuneFrame adjusted with scale: " .. tostring(runeScale))
     end
 end
 
-addon.CombatSafe.adjustEssenceFramePosition = function(self, essenceFrame, HealthBarsContainer, essenceScale, essenceOffsetX, essenceOffsetY)
-    essenceFrame:SetScale(essenceScale)
-    essenceFrame.sadunitframes_settingPosition = true
-    essenceFrame:ClearAllPoints()
-    essenceFrame:SetPoint("TOP", HealthBarsContainer, "BOTTOM", essenceOffsetX, essenceOffsetY)
-    essenceFrame.sadunitframes_settingPosition = false
-    return true
+function addon:adjustEssenceFramePosition(essenceFrame, HealthBarsContainer, essenceScale, essenceOffsetX, essenceOffsetY)
+    self:CombatSafe(function()
+        essenceFrame:SetScale(essenceScale)
+        essenceFrame.sadunitframes_settingPosition = true
+        essenceFrame:ClearAllPoints()
+        essenceFrame:SetPoint("TOP", HealthBarsContainer, "BOTTOM", essenceOffsetX, essenceOffsetY)
+        essenceFrame.sadunitframes_settingPosition = false
+    end)
 end
 
 function addon.unitFrames.player:adjustEssenceFrame()
-    addon:debug("Adjusting Evoker essence frame")
+    addon:Debug("Adjusting Evoker essence frame")
     
     -- Essence frame positioning settings
     local essenceScale = 0.85
@@ -331,7 +334,7 @@ function addon.unitFrames.player:adjustEssenceFrame()
     local HealthBarsContainer = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer
     
     if essenceFrame and HealthBarsContainer then
-        addon:debug("Found EssencePlayerFrame")
+        addon:Debug("Found EssencePlayerFrame")
         
         -- Hook to maintain position
         if not essenceFrame.sadunitframes_positionHooked then
@@ -339,20 +342,20 @@ function addon.unitFrames.player:adjustEssenceFrame()
             hooksecurefunc(essenceFrame, "SetPoint", function(self)
                 if self.sadunitframes_settingPosition then return end
                 C_Timer.After(0, function()
-                    addon.CombatSafe:adjustEssenceFramePosition(self, HealthBarsContainer, essenceScale, essenceOffsetX, essenceOffsetY)
+                    addon:adjustEssenceFramePosition(self, HealthBarsContainer, essenceScale, essenceOffsetX, essenceOffsetY)
                 end)
             end)
         end
         
         -- Set scale and position
-        addon.CombatSafe:adjustEssenceFramePosition(essenceFrame, HealthBarsContainer, essenceScale, essenceOffsetX, essenceOffsetY)
+        addon:adjustEssenceFramePosition(essenceFrame, HealthBarsContainer, essenceScale, essenceOffsetX, essenceOffsetY)
         
-        addon:debug("EssencePlayerFrame adjusted with scale: " .. tostring(essenceScale))
+        addon:Debug("EssencePlayerFrame adjusted with scale: " .. tostring(essenceScale))
     end
 end
 
 function addon.unitFrames.player:hideCombatGlow()
-    addon:debug("Hiding combat glow on player frame")
+    addon:Debug("Hiding combat glow on player frame")
     
     -- Hide the combat flash effect
     local combatFlash = PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual.CombatFlash
@@ -368,7 +371,7 @@ function addon.unitFrames.player:hideCombatGlow()
 end
 
 function addon.unitFrames.player:hideFrameFlash()
-    addon:debug("Hiding frame flash on player frame")
+    addon:Debug("Hiding frame flash on player frame")
     
     -- Hide the FrameFlash from PlayerFrameContainer
     local frameFlash = PlayerFrame.PlayerFrameContainer.FrameFlash
@@ -394,15 +397,16 @@ function addon.unitFrames.player:hideFrameFlash()
     end
 end
 
-addon.CombatSafe.positionCombatIndicator = function(self, combatIndicator, HealthBarsContainer, healthBarHeight)
-    combatIndicator:SetSize(healthBarHeight, healthBarHeight)
-    combatIndicator:ClearAllPoints()
-    combatIndicator:SetPoint("RIGHT", HealthBarsContainer, "LEFT", 0, 0)
-    return true
+function addon:positionCombatIndicator(combatIndicator, HealthBarsContainer, healthBarHeight)
+    self:CombatSafe(function()
+        combatIndicator:SetSize(healthBarHeight, healthBarHeight)
+        combatIndicator:ClearAllPoints()
+        combatIndicator:SetPoint("RIGHT", HealthBarsContainer, "LEFT", 0, 0)
+    end)
 end
 
 function addon.unitFrames.player:createCombatIndicator()
-    addon:debug("Creating combat indicator")
+    addon:Debug("Creating combat indicator")
     
     local HealthBarsContainer = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer
     
@@ -425,7 +429,7 @@ function addon.unitFrames.player:createCombatIndicator()
         
         PlayerFrame.sadunitframes_combatIndicator = combatIndicator
         
-        addon:debug("Combat indicator frame created with name: SAdUnitFrames_PlayerCombatIndicator")
+        addon:Debug("Combat indicator frame created with name: SAdUnitFrames_PlayerCombatIndicator")
     end
     
     local combatIndicator = PlayerFrame.sadunitframes_combatIndicator
@@ -433,39 +437,39 @@ function addon.unitFrames.player:createCombatIndicator()
     -- Position the indicator to the left of the health bar
     -- Scale it to match health bar height
     local healthBarHeight = HealthBarsContainer:GetHeight()
-    addon:debug("Health bar height: " .. tostring(healthBarHeight))
+    addon:Debug("Health bar height: " .. tostring(healthBarHeight))
     
     -- Set the frame size and position
-    addon.CombatSafe:positionCombatIndicator(combatIndicator, HealthBarsContainer, healthBarHeight)
+    addon:positionCombatIndicator(combatIndicator, HealthBarsContainer, healthBarHeight)
     
     -- Register for combat events
     if not combatIndicator.eventRegistered then
         combatIndicator:RegisterEvent("PLAYER_REGEN_DISABLED")
         combatIndicator:RegisterEvent("PLAYER_REGEN_ENABLED")
         combatIndicator:SetScript("OnEvent", function(self, event)
-            addon:debug("Combat event: " .. event)
+            addon:Debug("Combat event: " .. event)
             if event == "PLAYER_REGEN_DISABLED" then
-                addon:debug("Entering combat - showing indicator")
+                addon:Debug("Entering combat - showing indicator")
                 self:Show()
             elseif event == "PLAYER_REGEN_ENABLED" then
-                addon:debug("Leaving combat - hiding indicator")
+                addon:Debug("Leaving combat - hiding indicator")
                 self:Hide()
             end
         end)
         combatIndicator.eventRegistered = true
-        addon:debug("Combat events registered")
+        addon:Debug("Combat events registered")
     end
     
     -- Set initial state
     local inCombat = UnitAffectingCombat("player")
-    addon:debug("Initial combat state: " .. tostring(inCombat))
+    addon:Debug("Initial combat state: " .. tostring(inCombat))
     if inCombat then
         combatIndicator:Show()
-        addon:debug("Showing combat indicator (initial state)")
+        addon:Debug("Showing combat indicator (initial state)")
     else
         combatIndicator:Hide()
-        addon:debug("Hiding combat indicator (initial state)")
+        addon:Debug("Hiding combat indicator (initial state)")
     end
     
-    addon:debug("Combat indicator configured at position RIGHT of health bar with 0 offset")
+    addon:Debug("Combat indicator configured at position RIGHT of health bar with 0 offset")
 end

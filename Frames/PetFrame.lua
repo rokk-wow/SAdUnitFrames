@@ -4,10 +4,9 @@ local addon = SAdCore:GetAddon(addonName)
 
 addon.unitFrames = addon.unitFrames or {}
 addon.unitFrames.pet = addon.unitFrames.pet or {}
-addon.CombatSafe = addon.CombatSafe or {}
 
 function addon.unitFrames.pet:removePortrait()
-    addon:debug("Removing pet portrait")
+    addon:Debug("Removing pet portrait")
     
     local portrait = _G["PetPortrait"]
     local healthBarMask = PetFrame.HealthBarMask
@@ -25,7 +24,7 @@ function addon.unitFrames.pet:removePortrait()
 end
 
 function addon.unitFrames.pet:setClassColor()
-    addon:debug("Setting pet frame class color")
+    addon:Debug("Setting pet frame class color")
     
     local healthBar = PetFrame.HealthBar
     
@@ -57,7 +56,7 @@ function addon.unitFrames.pet:setClassColor()
 end
 
 function addon.unitFrames.pet:addBorder()
-    addon:debug("Adding pet frame border")
+    addon:Debug("Adding pet frame border")
     
     local healthBar = _G["PetFrameHealthBar"]
     
@@ -67,7 +66,7 @@ function addon.unitFrames.pet:addBorder()
 end
 
 function addon.unitFrames.pet:addBackground()
-    addon:debug("Adding pet frame background")
+    addon:Debug("Adding pet frame background")
     
     local healthBar = _G["PetFrameHealthBar"]
     
@@ -76,13 +75,14 @@ function addon.unitFrames.pet:addBackground()
     end
 end
 
-addon.CombatSafe.adjustPetHealthBar = function(self, healthBar, healthBarHeight)
-    healthBar:SetHeight(healthBarHeight)
-    return true
+function addon:adjustPetHealthBar(healthBar, healthBarHeight)
+    self:CombatSafe(function()
+        healthBar:SetHeight(healthBarHeight)
+    end)
 end
 
 function addon.unitFrames.pet:adjustHealthBar()
-    addon:debug("Adjusting pet health bar height")
+    addon:Debug("Adjusting pet health bar height")
     
     -- Health bar height setting
     local healthBarHeight = 16
@@ -90,21 +90,22 @@ function addon.unitFrames.pet:adjustHealthBar()
     local healthBar = _G["PetFrameHealthBar"]
     
     if healthBar then
-        addon.CombatSafe:adjustPetHealthBar(healthBar, healthBarHeight)
-        addon:debug("Pet health bar height set to: " .. tostring(healthBarHeight))
+        addon:adjustPetHealthBar(healthBar, healthBarHeight)
+        addon:Debug("Pet health bar height set to: " .. tostring(healthBarHeight))
     end
 end
 
-addon.CombatSafe.adjustPetText = function(self, nameText, healthBar, textOffsetX, textOffsetY, textScale)
-    nameText:SetScale(textScale)
-    nameText:SetJustifyH("LEFT")
-    nameText:ClearAllPoints()
-    nameText:SetPoint("BOTTOMLEFT", healthBar, "TOPLEFT", textOffsetX, textOffsetY)
-    return true
+function addon:adjustPetText(nameText, healthBar, textOffsetX, textOffsetY, textScale)
+    self:CombatSafe(function()
+        nameText:SetScale(textScale)
+        nameText:SetJustifyH("LEFT")
+        nameText:ClearAllPoints()
+        nameText:SetPoint("BOTTOMLEFT", healthBar, "TOPLEFT", textOffsetX, textOffsetY)
+    end)
 end
 
 function addon.unitFrames.pet:adjustText()
-    addon:debug("Adjusting pet frame text")
+    addon:Debug("Adjusting pet frame text")
     
     -- Text positioning settings
     local textOffsetX = 0
@@ -116,7 +117,7 @@ function addon.unitFrames.pet:adjustText()
     
     if not nameText or not healthBar then return end
     
-    addon.CombatSafe:adjustPetText(nameText, healthBar, textOffsetX, textOffsetY, textScale)
+    addon:adjustPetText(nameText, healthBar, textOffsetX, textOffsetY, textScale)
 end
 
 -- function addon.unitFrames.pet:adjustManaBar()

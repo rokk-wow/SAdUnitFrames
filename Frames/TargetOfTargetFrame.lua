@@ -4,20 +4,20 @@ local addon = SAdCore:GetAddon(addonName)
 
 addon.unitFrames = addon.unitFrames or {}
 addon.unitFrames.targettarget = addon.unitFrames.targettarget or {}
-addon.CombatSafe = addon.CombatSafe or {}
 
-addon.CombatSafe.adjustTargetOfTargetManaBar = function(self, manaBar, healthBar, offsetY)
-    manaBar.sadunitframes_settingPosition = true
-    manaBar:ClearAllPoints()
-    manaBar:SetPoint("TOPLEFT", healthBar, "BOTTOMLEFT", 0, offsetY)
-    manaBar:SetPoint("TOPRIGHT", healthBar, "BOTTOMRIGHT", 0, offsetY)
-    manaBar:SetHeight(12)
-    manaBar.sadunitframes_settingPosition = false
-    return true
+function addon:adjustTargetOfTargetManaBar(manaBar, healthBar, offsetY)
+    self:CombatSafe(function()
+        manaBar.sadunitframes_settingPosition = true
+        manaBar:ClearAllPoints()
+        manaBar:SetPoint("TOPLEFT", healthBar, "BOTTOMLEFT", 0, offsetY)
+        manaBar:SetPoint("TOPRIGHT", healthBar, "BOTTOMRIGHT", 0, offsetY)
+        manaBar:SetHeight(12)
+        manaBar.sadunitframes_settingPosition = false
+    end)
 end
 
 function addon.unitFrames.targettarget:removePortrait()
-    addon:debug("Removing target of target portrait")
+    addon:Debug("Removing target of target portrait")
     
     local portrait = TargetFrameToT.Portrait
     local healthBarMask = TargetFrameToT.HealthBar.HealthBarMask
@@ -29,7 +29,7 @@ function addon.unitFrames.targettarget:removePortrait()
 end
 
 function addon.unitFrames.targettarget:setClassColor()
-    addon:debug("Setting target of target frame class color")
+    addon:Debug("Setting target of target frame class color")
     local healthBar = TargetFrameToT.HealthBar
     
     if not healthBar then return end
@@ -60,7 +60,7 @@ function addon.unitFrames.targettarget:setClassColor()
 end
 
 function addon.unitFrames.targettarget:addBorder()
-    addon:debug("Adding target of target frame border")
+    addon:Debug("Adding target of target frame border")
     
     local healthBar = TargetFrameToT.HealthBar
     
@@ -70,7 +70,7 @@ function addon.unitFrames.targettarget:addBorder()
 end
 
 function addon.unitFrames.targettarget:addBackground()
-    addon:debug("Adding target of target frame background")
+    addon:Debug("Adding target of target frame background")
     
     local healthBar = TargetFrameToT.HealthBar
     
@@ -79,16 +79,17 @@ function addon.unitFrames.targettarget:addBackground()
     end
 end
 
-addon.CombatSafe.adjustTargetOfTargetText = function(self, nameText, healthBar, textOffsetX, textOffsetY, textScale)
-    nameText:SetScale(textScale)
-    nameText:SetJustifyH("LEFT")
-    nameText:ClearAllPoints()
-    nameText:SetPoint("BOTTOMLEFT", healthBar, "TOPLEFT", textOffsetX, textOffsetY)
-    return true
+function addon:adjustTargetOfTargetText(nameText, healthBar, textOffsetX, textOffsetY, textScale)
+    self:CombatSafe(function()
+        nameText:SetScale(textScale)
+        nameText:SetJustifyH("LEFT")
+        nameText:ClearAllPoints()
+        nameText:SetPoint("BOTTOMLEFT", healthBar, "TOPLEFT", textOffsetX, textOffsetY)
+    end)
 end
 
 function addon.unitFrames.targettarget:adjustText()
-    addon:debug("Adjusting target of target frame text")
+    addon:Debug("Adjusting target of target frame text")
     
     -- Text positioning settings
     local textOffsetX = 0
@@ -101,11 +102,11 @@ function addon.unitFrames.targettarget:adjustText()
     if not nameText or not healthBar then return end
     
     -- Scale and align text
-    addon.CombatSafe:adjustTargetOfTargetText(nameText, healthBar, textOffsetX, textOffsetY, textScale)
+    addon:adjustTargetOfTargetText(nameText, healthBar, textOffsetX, textOffsetY, textScale)
 end
 
 function addon.unitFrames.targettarget:adjustManaBar()
-    addon:debug("Adjusting target of target mana bar position")
+    addon:Debug("Adjusting target of target mana bar position")
     
     local healthBar = TargetFrameToT.HealthBar
     local manaBar = TargetFrameToT.ManaBar
@@ -123,11 +124,11 @@ function addon.unitFrames.targettarget:adjustManaBar()
         end)
     end
     
-    addon.CombatSafe:adjustTargetOfTargetManaBar(manaBar, healthBar, offsetY)
+    addon:adjustTargetOfTargetManaBar(manaBar, healthBar, offsetY)
 end
 
 function addon.unitFrames.targettarget:hideManaText()
-    addon:debug("Hiding target of target mana text")
+    addon:Debug("Hiding target of target mana text")
     
     local manaBar = TargetFrameToT.ManaBar
     
@@ -142,19 +143,20 @@ function addon.unitFrames.targettarget:hideManaText()
 end
 
 function addon.unitFrames.targettarget:updateTexture()
-    addon:debug("Updating target of target frame texture")
+    addon:Debug("Updating target of target frame texture")
 end
 
-addon.CombatSafe.adjustTargetOfTargetPosition = function(self, totFrame, targetHealthBar, offsetX, offsetY)
-    totFrame.sadunitframes_settingPosition = true
-    totFrame:ClearAllPoints()
-    totFrame:SetPoint("LEFT", targetHealthBar, "RIGHT", offsetX, offsetY)
-    totFrame.sadunitframes_settingPosition = false
-    return true
+function addon:adjustTargetOfTargetPosition(totFrame, targetHealthBar, offsetX, offsetY)
+    self:CombatSafe(function()
+        totFrame.sadunitframes_settingPosition = true
+        totFrame:ClearAllPoints()
+        totFrame:SetPoint("LEFT", targetHealthBar, "RIGHT", offsetX, offsetY)
+        totFrame.sadunitframes_settingPosition = false
+    end)
 end
 
 function addon.unitFrames.targettarget:adjustPosition()
-    addon:debug("Adjusting target of target frame position")
+    addon:Debug("Adjusting target of target frame position")
     
     -- Positioning settings
     local offsetX = -37
@@ -175,5 +177,5 @@ function addon.unitFrames.targettarget:adjustPosition()
         end)
     end
     
-    addon.CombatSafe:adjustTargetOfTargetPosition(totFrame, targetHealthBar, offsetX, offsetY)
+    addon:adjustTargetOfTargetPosition(totFrame, targetHealthBar, offsetX, offsetY)
 end

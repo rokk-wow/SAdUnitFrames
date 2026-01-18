@@ -4,20 +4,20 @@ local addon = SAdCore:GetAddon(addonName)
 
 addon.unitFrames = addon.unitFrames or {}
 addon.unitFrames.target = addon.unitFrames.target or {}
-addon.CombatSafe = addon.CombatSafe or {}
 
-addon.CombatSafe.adjustTargetManaBar = function(self, manaBar, HealthBarsContainer, offsetY)
-    manaBar.sadunitframes_settingPosition = true
-    manaBar:ClearAllPoints()
-    manaBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
-    manaBar:SetPoint("TOPRIGHT", HealthBarsContainer, "BOTTOMRIGHT", 0, offsetY)
-    manaBar:SetHeight(12)
-    manaBar.sadunitframes_settingPosition = false
-    return true
+function addon:adjustTargetManaBar(manaBar, HealthBarsContainer, offsetY)
+    self:CombatSafe(function()
+        manaBar.sadunitframes_settingPosition = true
+        manaBar:ClearAllPoints()
+        manaBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", 0, offsetY)
+        manaBar:SetPoint("TOPRIGHT", HealthBarsContainer, "BOTTOMRIGHT", 0, offsetY)
+        manaBar:SetHeight(12)
+        manaBar.sadunitframes_settingPosition = false
+    end)
 end
 
 function addon.unitFrames.target:removePortrait()
-    addon:debug("Removing target portrait")
+    addon:Debug("Removing target portrait")
     
     local portrait = TargetFrame.TargetFrameContainer.Portrait
     local portraitMask = TargetFrame.TargetFrameContainer.PortraitMask
@@ -30,8 +30,8 @@ function addon.unitFrames.target:removePortrait()
     local HealthBarsContainer = TargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer
     local nameText = TargetFrame.TargetFrameContent.TargetFrameContentMain.Name
     
-    addon:debug("Portrait frame: " .. tostring(portrait))
-    addon:debug("PortraitMask frame: " .. tostring(portraitMask))
+    addon:Debug("Portrait frame: " .. tostring(portrait))
+    addon:Debug("PortraitMask frame: " .. tostring(portraitMask))
     
     addon:hideFrame(portrait)
     addon:hideFrame(portraitMask)
@@ -43,10 +43,10 @@ function addon.unitFrames.target:removePortrait()
 end
 
 function addon.unitFrames.target:setClassColor()
-    addon:debug("Setting target frame class color")
+    addon:Debug("Setting target frame class color")
     local healthBar = TargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar
     
-    addon:debug("Target healthBar: " .. tostring(healthBar))
+    addon:Debug("Target healthBar: " .. tostring(healthBar))
     
     -- Set up color hook first (before anything else)
     if not healthBar.sadunitframes_colorHooked then
@@ -74,7 +74,7 @@ function addon.unitFrames.target:setClassColor()
 end
 
 function addon.unitFrames.target:addBorder()
-    addon:debug("Adding target frame border")
+    addon:Debug("Adding target frame border")
     
     local healthBar = TargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar
     local manaBar = TargetFrame.TargetFrameContent.TargetFrameContentMain.ManaBar
@@ -87,7 +87,7 @@ function addon.unitFrames.target:addBorder()
 end
 
 function addon.unitFrames.target:addBackground()
-    addon:debug("Adding target frame background")
+    addon:Debug("Adding target frame background")
     
     local healthBar = TargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar
     local manaBar = TargetFrame.TargetFrameContent.TargetFrameContentMain.ManaBar
@@ -99,25 +99,26 @@ function addon.unitFrames.target:addBackground()
     end
 end
 
-addon.CombatSafe.adjustTargetHealthBar = function(self, healthBarHeight)
-    local HealthBarsContainer = TargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer
-    
-    if HealthBarsContainer then
-        HealthBarsContainer:SetHeight(healthBarHeight)
-        addon:debug("Target HealthBarsContainer height set to: " .. tostring(healthBarHeight))
-    end
-    return true
+function addon:adjustTargetHealthBar(healthBarHeight)
+    self:CombatSafe(function()
+        local HealthBarsContainer = TargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer
+        
+        if HealthBarsContainer then
+            HealthBarsContainer:SetHeight(healthBarHeight)
+            addon:Debug("Target HealthBarsContainer height set to: " .. tostring(healthBarHeight))
+        end
+    end)
 end
 
 function addon.unitFrames.target:adjustHealthBar()
-    addon:debug("Adjusting target health bar height")
+    addon:Debug("Adjusting target health bar height")
     
     local healthBarHeight = 19
-    addon.CombatSafe:adjustTargetHealthBar(healthBarHeight)
+    addon:adjustTargetHealthBar(healthBarHeight)
 end
 
 function addon.unitFrames.target:adjustText()
-    addon:debug("Adjusting target frame text")
+    addon:Debug("Adjusting target frame text")
     
     local HealthBarsContainer = TargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer
     local nameText = TargetFrame.TargetFrameContent.TargetFrameContentMain.Name
@@ -143,7 +144,7 @@ function addon.unitFrames.target:adjustText()
 end
 
 function addon.unitFrames.target:adjustManaBar()
-    addon:debug("Adjusting target mana bar position")
+    addon:Debug("Adjusting target mana bar position")
     
     local HealthBarsContainer = TargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer
     local manaBar = TargetFrame.TargetFrameContent.TargetFrameContentMain.ManaBar
@@ -161,11 +162,11 @@ function addon.unitFrames.target:adjustManaBar()
         end)
     end
     
-    addon.CombatSafe:adjustTargetManaBar(manaBar, HealthBarsContainer, offsetY)
+    addon:adjustTargetManaBar(manaBar, HealthBarsContainer, offsetY)
 end
 
 function addon.unitFrames.target:hideManaText()
-    addon:debug("Hiding target mana text")
+    addon:Debug("Hiding target mana text")
     
     local manaBar = TargetFrame.TargetFrameContent.TargetFrameContentMain.ManaBar
     
@@ -180,68 +181,73 @@ function addon.unitFrames.target:hideManaText()
 end
 
 function addon.unitFrames.target:updateTexture()
-    addon:debug("Updating target frame texture")
+    addon:Debug("Updating target frame texture")
 end
 
 function addon.unitFrames.target:hidePvpIcon()
-    addon:debug("Hiding target PVP icon")
+    addon:Debug("Hiding target PVP icon")
     
     local pvpIcon = TargetFrame.TargetFrameContent.TargetFrameContentContextual.PrestigePortrait
     local prestigeBadge = TargetFrame.TargetFrameContent.TargetFrameContentContextual.PrestigeBadge
+    local pvpIconFrame = TargetFrame.TargetFrameContent.TargetFrameContentContextual.PVPIcon
     
     addon:hideFrame(pvpIcon)
     addon:hideFrame(prestigeBadge)
+    addon:hideFrame(pvpIconFrame)
 end
 
-addon.CombatSafe.adjustEliteDragonPosition = function(self, dragonTexture, TargetFrame)
-    dragonTexture:SetScale(0.35)
-    dragonTexture:ClearAllPoints()
-    dragonTexture:SetPoint("LEFT", TargetFrame, "RIGHT", -300, 0)
-    return true
+function addon:adjustEliteDragonPosition(dragonTexture, TargetFrame)
+    self:CombatSafe(function()
+        dragonTexture:SetScale(0.35)
+        dragonTexture:ClearAllPoints()
+        dragonTexture:SetPoint("LEFT", TargetFrame, "RIGHT", -300, 0)
+    end)
 end
 
 function addon.unitFrames.target:adjustEliteDragon()
-    addon:debug("Adjusting elite dragon")
+    addon:Debug("Adjusting elite dragon")
     
     local dragonTexture = TargetFrame.TargetFrameContainer.BossPortraitFrameTexture
     
     if not dragonTexture then return end
     
     -- Scale down and position to the right of the target frame
-    addon.CombatSafe:adjustEliteDragonPosition(dragonTexture, TargetFrame)
+    addon:adjustEliteDragonPosition(dragonTexture, TargetFrame)
 end
 
-addon.CombatSafe.adjustHighLevelSkullPosition = function(self, skull, HealthBarsContainer)
-    skull:ClearAllPoints()
-    skull:SetPoint("RIGHT", HealthBarsContainer, "LEFT", -3, 0)
-    return true
+function addon:adjustHighLevelSkullPosition(skull, HealthBarsContainer)
+    self:CombatSafe(function()
+        skull:ClearAllPoints()
+        skull:SetPoint("RIGHT", HealthBarsContainer, "LEFT", -3, 0)
+    end)
 end
 
 function addon.unitFrames.target:adjustHighLevelSkull()
-    addon:debug("Adjusting high level skull")
+    addon:Debug("Adjusting high level skull")
     
     local skull = TargetFrame.TargetFrameContent.TargetFrameContentContextual.HighLevelTexture
     local HealthBarsContainer = TargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer
     
     if not skull then return end
     
-    addon.CombatSafe:adjustHighLevelSkullPosition(skull, HealthBarsContainer)
+    addon:adjustHighLevelSkullPosition(skull, HealthBarsContainer)
 end
 
-addon.CombatSafe.adjustTargetCastBarPosition = function(self, castBar, HealthBarsContainer, castBarWidth, castBarOffsetX, castBarOffsetY)
-    castBar.sadunitframes_settingWidth = true
-    castBar:SetWidth(castBarWidth)
-    castBar.sadunitframes_settingWidth = false
-    
-    castBar.sadunitframes_settingPosition = true
-    castBar:ClearAllPoints()
-    castBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", castBarOffsetX, castBarOffsetY)
-    castBar.sadunitframes_settingPosition = false
-    return true
+function addon:adjustTargetCastBarPosition(castBar, HealthBarsContainer, castBarWidth, castBarOffsetX, castBarOffsetY)
+    self:CombatSafe(function()
+        castBar.sadunitframes_settingWidth = true
+        castBar:SetWidth(castBarWidth)
+        castBar.sadunitframes_settingWidth = false
+        
+        castBar.sadunitframes_settingPosition = true
+        castBar:ClearAllPoints()
+        castBar:SetPoint("TOPLEFT", HealthBarsContainer, "BOTTOMLEFT", castBarOffsetX, castBarOffsetY)
+        castBar.sadunitframes_settingPosition = false
+    end)
 end
 
 function addon.unitFrames.target:adjustCastBar()
-    addon:debug("=== Adjusting target cast bar ===")
+    addon:Debug("=== Adjusting target cast bar ===")
     
     -- Cast bar positioning settings
     local castBarWidth = 126
@@ -252,24 +258,24 @@ function addon.unitFrames.target:adjustCastBar()
     local castBar = _G["TargetFrameSpellBar"]
     local HealthBarsContainer = TargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer
     
-    addon:debug("castBar: " .. tostring(castBar))
-    addon:debug("HealthBarsContainer: " .. tostring(HealthBarsContainer))
+    addon:Debug("castBar: " .. tostring(castBar))
+    addon:Debug("HealthBarsContainer: " .. tostring(HealthBarsContainer))
     
     if not castBar then
-        addon:debug("Cast bar not found!")
+        addon:Debug("Cast bar not found!")
         return
     end
     
     if not HealthBarsContainer then
-        addon:debug("HealthBarsContainer not found!")
+        addon:Debug("HealthBarsContainer not found!")
         return
     end
     
     -- Set cast bar width and position
-    addon:debug("Setting cast bar width to: " .. tostring(castBarWidth))
-    addon.CombatSafe:adjustTargetCastBarPosition(castBar, HealthBarsContainer, castBarWidth, castBarOffsetX, castBarOffsetY)
+    addon:Debug("Setting cast bar width to: " .. tostring(castBarWidth))
+    addon:adjustTargetCastBarPosition(castBar, HealthBarsContainer, castBarWidth, castBarOffsetX, castBarOffsetY)
     
-    addon:debug("Cast bar repositioned")
+    addon:Debug("Cast bar repositioned")
     
     -- Hook to maintain position and size
     if not castBar.sadunitframes_sizeHooked then
@@ -277,14 +283,14 @@ function addon.unitFrames.target:adjustCastBar()
         hooksecurefunc(castBar, "SetWidth", function(self, width)
             if self.sadunitframes_settingWidth then return end
             if math.abs(width - castBarWidth) > 1 then
-                addon.CombatSafe:adjustTargetCastBarPosition(self, HealthBarsContainer, castBarWidth, castBarOffsetX, castBarOffsetY)
+                addon:adjustTargetCastBarPosition(self, HealthBarsContainer, castBarWidth, castBarOffsetX, castBarOffsetY)
             end
         end)
         
         hooksecurefunc(castBar, "SetPoint", function(self)
             if self.sadunitframes_settingPosition then return end
             C_Timer.After(0, function()
-                addon.CombatSafe:adjustTargetCastBarPosition(self, HealthBarsContainer, castBarWidth, castBarOffsetX, castBarOffsetY)
+                addon:adjustTargetCastBarPosition(self, HealthBarsContainer, castBarWidth, castBarOffsetX, castBarOffsetY)
             end)
         end)
     end
