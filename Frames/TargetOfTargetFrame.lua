@@ -49,7 +49,7 @@ function addon.unitFrames.targettarget:setClassColor()
     end
     
     -- Apply texture
-    local texturePath = addon:getTexturePath(addon.settings.frameStyle.statusbarTexture)
+    local texturePath = addon:getTexturePath(addon.savedVars.frameStyle.statusbarTexture)
     healthBar:SetStatusBarTexture(texturePath)
     
     -- Apply color immediately after texture (the hook will maintain it)
