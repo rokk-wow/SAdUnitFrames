@@ -15,7 +15,7 @@ addon.vars = {
 }
 
 function addon:Initialize()
-    self.config.version = "1.0"
+    self.sadCore.version = "1.0"
     self.author = "Rôkk-Wyrmrest Accord"
 
     local textures = {
@@ -43,7 +43,7 @@ function addon:Initialize()
         {value = "Steel", label = "Steel"},
     }
 
-        self.config.settings.frameStyle = {
+        self.sadCore.panels.frameStyle = {
             title = "frameStyleTitle",
             controls = {
                 {
