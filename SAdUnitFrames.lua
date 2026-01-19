@@ -2,9 +2,9 @@ local addonName = ...
 local SAdCore = LibStub("SAdCore-1")
 local addon = SAdCore:GetAddon(addonName)
 
-addon.savedVarsGlobalName = "SAdUnitFrames_Settings_Global"
-addon.savedVarsPerCharName = "SAdUnitFrames_Settings_Char"
-addon.compartmentFuncName = "SAdUnitFrames_Compartment_Func"
+addon.sadCore.savedVarsGlobalName = "SAdUnitFrames_Settings_Global"
+addon.sadCore.savedVarsPerCharName = "SAdUnitFrames_Settings_Char"
+addon.sadCore.compartmentFuncName = "SAdUnitFrames_Compartment_Func"
 addon.activeChatFilters = {}
 
 addon.vars = {
