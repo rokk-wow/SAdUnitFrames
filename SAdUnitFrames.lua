@@ -43,25 +43,33 @@ function addon:Initialize()
         {value = "Steel", label = "Steel"},
     }
 
-        self.sadCore.panels.frameStyle = {
-            title = "frameStyleTitle",
-            controls = {
-                {
-                    type = "header",
-                    name = "frameStyleHeader"
-                },
-                {
-                    type = "dropdown",
-                    name = "statusbarTexture",
-                    default = "Smooth",
-                    options = textures,
-                    onValueChange = self.updateAllFrames
-                },
-            }
+    self:AddSettingsPanel("frameStyle", {
+        title = "frameStyleTitle",
+        controls = {
+            {
+                type = "header",
+                name = "frameStyleHeader"
+            },
+            {
+                type = "dropdown",
+                name = "statusbarTexture",
+                default = "Smooth",
+                options = textures,
+                onValueChange = self.updateAllFrames
+            },
         }
+    })
     
     -- Register events
     self:RegisterEvent("PLAYER_ENTERING_WORLD", function()
+        -- Hide UIWidgetBelowMinimapContainerFrame
+        if UIWidgetBelowMinimapContainerFrame then
+            addon:hideFrame(UIWidgetBelowMinimapContainerFrame)
+        end
+        
+        -- Adjust arena frames
+        addon:AdjustArenaFrames()
+        
         local attempts = 0
         local function tryUpdate()
             attempts = attempts + 1
@@ -74,6 +82,12 @@ function addon:Initialize()
             end
         end
         C_Timer.After(0.1, tryUpdate)
+    end)
+    
+    self:RegisterEvent("ARENA_OPPONENT_UPDATE", function()
+        C_Timer.After(0.1, function()
+            addon:AdjustArenaFrames()
+        end)
     end)
     
     self:RegisterEvent("PLAYER_TARGET_CHANGED", function()
@@ -273,4 +287,78 @@ function addon:updateAllFrames()
     for _, frameType in ipairs({"Player", "Target", "TargetTarget", "Pet", "Focus", "FocusTarget"}) do
         self:updateUnitFrame(frameType)
     end
+end
+
+function addon:AdjustArenaFrames()
+    addon:Debug("Adjusting arena frames")
+    
+    -- Iterate through all possible arena frames (1-5)
+    for i = 1, 5 do
+        local frameName = "CompactArenaFrameMember" .. i
+        local frame = _G[frameName]
+        
+        if frame then
+            addon:Debug("Found arena frame: " .. frameName)
+            
+            -- Hook the SetPoint function to override positioning
+            if not frame.sadunitframes_arenaHooked then
+                frame.sadunitframes_arenaHooked = true
+                
+                hooksecurefunc(frame, "SetPoint", function(self)
+                    if self.sadunitframes_settingPosition then return end
+                    
+                    -- Don't override if Edit Mode is active
+                    if EditModeManagerFrame and EditModeManagerFrame:IsShown() then
+                        return
+                    end
+                    
+                    -- Only adjust spacing for frames 2+, not frame 1
+                    if i > 1 then
+                        C_Timer.After(0, function()
+                            addon:PositionArenaFrame(i)
+                        end)
+                    end
+                end)
+            end
+            
+            -- Set initial position only if Edit Mode is not active
+            -- And only for secondary frames (2+)
+            if not (EditModeManagerFrame and EditModeManagerFrame:IsShown()) and i > 1 then
+                addon:PositionArenaFrame(i)
+            end
+        end
+    end
+end
+
+function addon:PositionArenaFrame(index)
+    -- Never reposition frame 1 - let Edit Mode/Blizzard handle it
+    if index == 1 then
+        return
+    end
+    
+    local frameName = "CompactArenaFrameMember" .. index
+    local frame = _G[frameName]
+    
+    if not frame then return end
+    
+    -- Don't reposition if Edit Mode is active
+    if EditModeManagerFrame and EditModeManagerFrame:IsShown() then
+        return
+    end
+    
+    self:CombatSafe(function()
+        frame.sadunitframes_settingPosition = true
+        frame:ClearAllPoints()
+        
+        -- All frames 2+ anchor to the previous frame with minimal spacing
+        local prevFrameName = "CompactArenaFrameMember" .. (index - 1)
+        local prevFrame = _G[prevFrameName]
+        
+        if prevFrame then
+            -- Set to 0 spacing (or -1 for overlap if needed)
+            frame:SetPoint("TOP", prevFrame, "BOTTOM", 0, 0)
+        end
+        
+        frame.sadunitframes_settingPosition = false
+    end)
 end
