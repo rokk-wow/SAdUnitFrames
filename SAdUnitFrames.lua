@@ -15,7 +15,6 @@ addon.vars = {
 }
 
 function addon:Initialize()
-    self.sadCore.version = "1.0"
     self.author = "Rôkk-Wyrmrest Accord"
 
     local textures = {
@@ -60,305 +59,85 @@ function addon:Initialize()
         }
     })
     
-    -- Register events
-    self:RegisterEvent("PLAYER_ENTERING_WORLD", function()
-        -- Hide UIWidgetBelowMinimapContainerFrame
-        if UIWidgetBelowMinimapContainerFrame then
-            addon:hideFrame(UIWidgetBelowMinimapContainerFrame)
-        end
-        
-        -- Adjust arena frames
-        addon:AdjustArenaFrames()
-        
-        local attempts = 0
-        local function tryUpdate()
-            attempts = attempts + 1
-            if UnitClass("player") then
-                addon:updateAllFrames()
-            elseif attempts < 20 then
-                C_Timer.After(0.1, tryUpdate)
-            else
-                addon:updateAllFrames()
-            end
-        end
-        C_Timer.After(0.1, tryUpdate)
-    end)
-    
-    self:RegisterEvent("ARENA_OPPONENT_UPDATE", function()
-        C_Timer.After(0.1, function()
-            addon:AdjustArenaFrames()
-        end)
-    end)
-    
-    self:RegisterEvent("PLAYER_TARGET_CHANGED", function()
-        addon:updateUnitFrame("Target")
-    end)
-    
-    self:RegisterEvent("PLAYER_FOCUS_CHANGED", function()
-        addon:updateUnitFrame("Focus")
-    end)
-    
-    self:RegisterEvent("UNIT_AURA", function(event, unit)
-        if unit == "focus" then
-            addon.unitFrames.focus:hideBuffsAndDebuffs()
-        end
-    end)
-    
-    self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", function()
-        addon:Debug("Spec changed, updating player frame")
-        C_Timer.After(0.2, function()
-            addon:updateUnitFrame("Player")
-        end)
-    end)
+
+
+
+    self:RegisterEvent("PLAYER_ENTERING_WORLD", self.onPlayerEnteringWorld)   
+    self:RegisterEvent("PLAYER_TARGET_CHANGED", self.onPlayerTargetChanged)    
+    self:RegisterEvent("PLAYER_FOCUS_CHANGED", self.onPlayerFocusChange)    
+    self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", self.onPlayerSpecChange)
+    self:RegisterEvent("UNIT_AURA", self.onUnitAura)
 end
 
-function addon:updateUnitFrame(frameType)
-    local frameTypeLower = frameType:lower()
-    
-    addon:Debug("Updating " .. frameTypeLower .. " frame")
-    
-    local frameData = addon.unitFrames[frameTypeLower]
-    if frameData then
-        for funcName, func in pairs(frameData) do
-            if type(func) == "function" then
-                func(frameData)
-            end
+function addon:onPlayerEnteringWorld()
+end
+
+function addon:onPlayerTargetChanged()
+end
+
+function addon:onPlayerFocusChange()
+end
+
+function addon:onPlayerSpecChange()
+end
+
+function addon:onUnitAura()
+end
+
+function addon:UpdateAllFrames()
+    self:UpdatePlayerFrame()
+    self:UpdateFocusFrame()
+    self:UpdateFocusTargetFrame()
+    self:UpdatePetFrame()
+    self:UpdateTargetFrame()
+    self:UpdateTargetTargetFrame()
+end
+
+function addon:UpdatePlayerFrame()
+    for key, value in pairs(addon.unitFrames.Player) do
+        if type(value) == "function" then
+            value(addon.unitFrames.Player)
         end
     end
 end
 
-function addon:getUnitColor(frameType)
-    local unitToken = frameType:lower()
-    
-    addon:Debug("Getting color for unit: " .. unitToken)
-    addon:Debug("UnitIsPlayer: " .. tostring(UnitIsPlayer(unitToken)))
-    
-    if unitToken == "player" then
-        local _, classFileName = UnitClass(unitToken)
-        if classFileName and RAID_CLASS_COLORS[classFileName] then
-            local classColor = RAID_CLASS_COLORS[classFileName]
-            addon:Debug("Player class color: " .. classColor.r .. ", " .. classColor.g .. ", " .. classColor.b)
-            return classColor.r, classColor.g, classColor.b
-        end
-    end
-    
-    if UnitIsPlayer(unitToken) then
-        local _, classFileName = UnitClass(unitToken)
-        addon:Debug("Target is player, class: " .. tostring(classFileName))
-        if classFileName and RAID_CLASS_COLORS[classFileName] then
-            local classColor = RAID_CLASS_COLORS[classFileName]
-            addon:Debug("Target class color: " .. classColor.r .. ", " .. classColor.g .. ", " .. classColor.b)
-            return classColor.r, classColor.g, classColor.b
-        end
-    end
-    
-    if not UnitIsPlayer(unitToken) and UnitIsFriend("player", unitToken) then
-        if addon.currentZone == "dungeon" or addon.currentZone == "raid" then
-            local _, classFileName = UnitClass(unitToken)
-            addon:Debug("Friendly NPC in instance, class: " .. tostring(classFileName))
-            if classFileName and RAID_CLASS_COLORS[classFileName] then
-                local classColor = RAID_CLASS_COLORS[classFileName]
-                addon:Debug("NPC class color: " .. classColor.r .. ", " .. classColor.g .. ", " .. classColor.b)
-                return classColor.r, classColor.g, classColor.b
-            end
-        end
-    end
-    
-    local r, g, b = UnitSelectionColor(unitToken)
-    addon:Debug("UnitSelectionColor: " .. tostring(r) .. ", " .. tostring(g) .. ", " .. tostring(b))
-    if not r or (r == 0 and g == 0 and b == 0) then
-        addon:Debug("Using fallback white color")
-        return 1, 1, 1
-    end
-    return r, g, b
-end
-
-function addon:addBorder(bar)
-    if not bar then return end
-    
-    local size = self.vars.borderWidth
-    local colorHex = self.vars.borderColor
-    local r, g, b, a = self:HexToRGB(colorHex)
-    
-    local borders = bar.SAdUnitFrames_Borders
-    
-    if borders then
-        borders.top:SetColorTexture(r, g, b, a)
-        borders.top:SetHeight(size)
-        
-        borders.bottom:SetColorTexture(r, g, b, a)
-        borders.bottom:SetHeight(size)
-        
-        borders.left:SetColorTexture(r, g, b, a)
-        borders.left:SetWidth(size)
-        
-        borders.right:SetColorTexture(r, g, b, a)
-        borders.right:SetWidth(size)
-    else
-        borders = {}
-        
-        borders.top = bar:CreateTexture(nil, "OVERLAY")
-        borders.top:SetColorTexture(r, g, b, a)
-        borders.top:SetHeight(size)
-        borders.top:ClearAllPoints()
-        borders.top:SetPoint("TOPLEFT", bar, "TOPLEFT", 0, 0)
-        borders.top:SetPoint("TOPRIGHT", bar, "TOPRIGHT", 0, 0)
-        
-        borders.bottom = bar:CreateTexture(nil, "OVERLAY")
-        borders.bottom:SetColorTexture(r, g, b, a)
-        borders.bottom:SetHeight(size)
-        borders.bottom:ClearAllPoints()
-        borders.bottom:SetPoint("BOTTOMLEFT", bar, "BOTTOMLEFT", 0, 0)
-        borders.bottom:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", 0, 0)
-        
-        borders.left = bar:CreateTexture(nil, "OVERLAY")
-        borders.left:SetColorTexture(r, g, b, a)
-        borders.left:SetWidth(size)
-        borders.left:ClearAllPoints()
-        borders.left:SetPoint("TOPLEFT", bar, "TOPLEFT", 0, 0)
-        borders.left:SetPoint("BOTTOMLEFT", bar, "BOTTOMLEFT", 0, 0)
-        
-        borders.right = bar:CreateTexture(nil, "OVERLAY")
-        borders.right:SetColorTexture(r, g, b, a)
-        borders.right:SetWidth(size)
-        borders.right:ClearAllPoints()
-        borders.right:SetPoint("TOPRIGHT", bar, "TOPRIGHT", 0, 0)
-        borders.right:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", 0, 0)
-        
-        bar.SAdUnitFrames_Borders = borders
-    end
-end
-
-function addon:addBackground(bar)
-    if not bar then return end
-    
-    local colorHex = self.vars.backgroundColor
-    local r, g, b, a = self:HexToRGB(colorHex)
-    
-    if bar.SAdUnitFrames_Background then
-        bar.SAdUnitFrames_Background:SetColorTexture(r, g, b, a)
-    else
-        local bg = bar:CreateTexture(nil, "BACKGROUND")
-        bg:SetColorTexture(r, g, b, a)
-        bg:SetAllPoints(bar)
-        bar.SAdUnitFrames_Background = bg
-    end
-end
-
-function addon:hideFrame(frame)
-    if not frame then return end
-    self:CombatSafe(function()
-        if not frame.sadunitframes_hideHooked then
-            frame.sadunitframes_hideHooked = true
-            hooksecurefunc(frame, "Show", function(self)
-                if self.sadunitframes_hideHooked then
-                    self:SetAlpha(0)
-                end
-            end)
-        end
-        
-        local success, err = pcall(function()
-            frame:Hide()
-        end)
-        
-        frame:SetAlpha(0)
-    end)
-end
-
-function addon:setFramePoint(frame, ...)
-    if not frame then return end
-    local args = {...}
-    self:CombatSafe(function()
-        frame:ClearAllPoints()
-        frame:SetPoint(unpack(args))
-    end)
-end
-
-function addon:getTexturePath(textureName)
-    if textureName == "Blizzard" then
-        return [[Interface\TargetingFrame\UI-StatusBar]]
-    else
-        return [[Interface\AddOns\SAdUnitFrames\Textures\]] .. textureName
-    end
-end
-
-function addon:updateAllFrames()
-    addon:Debug("Updating all frames")
-    for _, frameType in ipairs({"Player", "Target", "TargetTarget", "Pet", "Focus", "FocusTarget"}) do
-        self:updateUnitFrame(frameType)
-    end
-end
-
-function addon:AdjustArenaFrames()
-    addon:Debug("Adjusting arena frames")
-    
-    -- Iterate through all possible arena frames (1-5)
-    for i = 1, 5 do
-        local frameName = "CompactArenaFrameMember" .. i
-        local frame = _G[frameName]
-        
-        if frame then
-            addon:Debug("Found arena frame: " .. frameName)
-            
-            -- Hook the SetPoint function to override positioning
-            if not frame.sadunitframes_arenaHooked then
-                frame.sadunitframes_arenaHooked = true
-                
-                hooksecurefunc(frame, "SetPoint", function(self)
-                    if self.sadunitframes_settingPosition then return end
-                    
-                    -- Don't override if Edit Mode is active
-                    if EditModeManagerFrame and EditModeManagerFrame:IsShown() then
-                        return
-                    end
-                    
-                    -- Only adjust spacing for frames 2+, not frame 1
-                    if i > 1 then
-                        C_Timer.After(0, function()
-                            addon:PositionArenaFrame(i)
-                        end)
-                    end
-                end)
-            end
-            
-            -- Set initial position only if Edit Mode is not active
-            -- And only for secondary frames (2+)
-            if not (EditModeManagerFrame and EditModeManagerFrame:IsShown()) and i > 1 then
-                addon:PositionArenaFrame(i)
-            end
+function addon:UpdateFocusFrame()
+    for key, value in pairs(addon.unitFrames.FocusFrame) do
+        if type(value) == "function" then
+            value(addon.unitFrames.FocusFrame)
         end
     end
 end
 
-function addon:PositionArenaFrame(index)
-    -- Never reposition frame 1 - let Edit Mode/Blizzard handle it
-    if index == 1 then
-        return
-    end
-    
-    local frameName = "CompactArenaFrameMember" .. index
-    local frame = _G[frameName]
-    
-    if not frame then return end
-    
-    -- Don't reposition if Edit Mode is active
-    if EditModeManagerFrame and EditModeManagerFrame:IsShown() then
-        return
-    end
-    
-    self:CombatSafe(function()
-        frame.sadunitframes_settingPosition = true
-        frame:ClearAllPoints()
-        
-        -- All frames 2+ anchor to the previous frame with minimal spacing
-        local prevFrameName = "CompactArenaFrameMember" .. (index - 1)
-        local prevFrame = _G[prevFrameName]
-        
-        if prevFrame then
-            -- Set to 0 spacing (or -1 for overlap if needed)
-            frame:SetPoint("TOP", prevFrame, "BOTTOM", 0, 0)
+function addon:UpdateFocusTargetFrame()
+    for key, value in pairs(addon.unitFrames.FocusTarget) do
+        if type(value) == "function" then
+            value(addon.unitFrames.FocusTarget)
         end
-        
-        frame.sadunitframes_settingPosition = false
-    end)
+    end
 end
+
+function addon:UpdatePetFrame()
+    for key, value in pairs(addon.unitFrames.Pet) do
+        if type(value) == "function" then
+            value(addon.unitFrames.Pet)
+        end
+    end
+end
+
+function addon:UpdateTargetFrame()
+    for key, value in pairs(addon.unitFrames.Target) do
+        if type(value) == "function" then
+            value(addon.unitFrames.Target)
+        end
+    end
+end
+
+function addon:UpdateTargetTargetFrame()
+    for key, value in pairs(addon.unitFrames.TargetTarget) do
+        if type(value) == "function" then
+            value(addon.unitFrames.TargetTarget)
+        end
+    end
+end
+

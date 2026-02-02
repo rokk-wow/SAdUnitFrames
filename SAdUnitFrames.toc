@@ -11,7 +11,7 @@ Libs\LibSAdCore\LibSAdCore.lua
 
 Frames\PlayerFrame.lua
 Frames\TargetFrame.lua
-Frames\TargetOfTargetFrame.lua
+Frames\TargetTargetFrame.lua
 Frames\FocusFrame.lua
 Frames\FocusTargetFrame.lua
 Frames\PetFrame.lua
