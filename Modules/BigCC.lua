@@ -26,13 +26,17 @@ local function Update(self, event, unit)
     -- Find highest priority CC via C_LossOfControl
     local highestPriorityCC = nil
     local highestPriority = -1
+    local matchCount = 0
 
     local count = C_LossOfControl.GetActiveLossOfControlDataCountByUnit(unit)
     for i = 1, count do
         local locData = C_LossOfControl.GetActiveLossOfControlDataByUnit(unit, i)
-        if locData and locData.priority and locData.priority > highestPriority then
-            highestPriority = locData.priority
-            highestPriorityCC = locData
+        if locData then
+            matchCount = matchCount + 1
+            if locData.priority and locData.priority > highestPriority then
+                highestPriority = locData.priority
+                highestPriorityCC = locData
+            end
         end
     end
 
@@ -50,7 +54,8 @@ local function Update(self, event, unit)
             unit,
             highestPriorityCC.auraInstanceID,
             highestPriorityCC.startTime or 0,
-            highestPriorityCC.duration or 0
+            highestPriorityCC.duration or 0,
+            matchCount
         )
     else
         addon:BigAuraHide(element)

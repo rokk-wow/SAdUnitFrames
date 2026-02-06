@@ -265,7 +265,7 @@ addon.config = {
         bigCC = {
             enabled = true,
             showCooldownNumbers = true,
-            showGlow = false,
+            showGlow = true,
             glowColor = { r = 1, g = 0, b = 0, a = 1 },   -- red
             placeholderIcon = "spell_nature_polymorph",
             placeholderOpacity = 0.3,

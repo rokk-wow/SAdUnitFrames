@@ -653,6 +653,15 @@ function addon:CreateBigAuraFrame(frame, modCfg, panelHeight, elementKey, toolti
         GameTooltip:Hide()
     end)
 
+    -- Match count (lower-right corner, shows total matching auras)
+    local fontPath = self:GetFontPath()
+    local countText = element:CreateFontString(nil, "OVERLAY")
+    countText:SetFont(fontPath, self.config.global.extraSmallFontSize - 2, "OUTLINE")
+    countText:SetPoint("BOTTOMRIGHT", element, "BOTTOMRIGHT", 2, 2)
+    countText:SetJustifyH("RIGHT")
+    countText:Hide()
+    element.Count = countText
+
     self:AddBorder(element)
 
     frame[elementKey] = element
@@ -671,7 +680,7 @@ end
 --- @param auraInstanceID number
 --- @param startTime number  GetTime()-based start
 --- @param duration  number  Total duration in seconds
-function addon:BigAuraShow(element, texture, unit, auraInstanceID, startTime, duration)
+function addon:BigAuraShow(element, texture, unit, auraInstanceID, startTime, duration, matchCount)
     element.Icon:SetTexture(texture)
     element.Icon:Show()
     element.activeAuraInstanceID = auraInstanceID
@@ -694,6 +703,15 @@ function addon:BigAuraShow(element, texture, unit, auraInstanceID, startTime, du
             element.Cooldown:Hide()
         end
     end
+
+    if element.Count then
+        if matchCount and matchCount >= 2 then
+            element.Count:SetText(matchCount)
+            element.Count:Show()
+        else
+            element.Count:Hide()
+        end
+    end
 end
 
 --- Hide / reset a big aura element back to placeholder state.
@@ -711,5 +729,8 @@ function addon:BigAuraHide(element)
     if element.ProcGlow then
         element.ProcGlow.ProcLoop:Stop()
         element.ProcGlow:Hide()
+    end
+    if element.Count then
+        element.Count:Hide()
     end
 end
