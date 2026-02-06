@@ -6,8 +6,20 @@
 ## SavedVariablesPerCharacter: SAdUnitFrames_Settings_Char
 ## AddonCompartmentFunc: SAdUnitFrames_Compartment_Func
 ## IconTexture: Interface\Icons\boss_odunrunes_green
+## X-oUF: SAdUnitFrames_oUF
 
 Libs\LibSAdCore\LibSAdCore.lua
+Libs\oUF\oUF.xml
+
+Config.lua
+Modules\BigBuffs.lua
+Modules\BigCC.lua
+Modules\BigDefensives.lua
+Modules\Castbar.lua
+Modules\DispelBorder.lua
+Modules\EnemyDebuffs.lua
+Modules\PlayerBuffs.lua
+Modules\Trinket.lua
 
 Frames\PlayerFrame.lua
 Frames\TargetFrame.lua
@@ -15,5 +27,7 @@ Frames\TargetTargetFrame.lua
 Frames\FocusFrame.lua
 Frames\FocusTargetFrame.lua
 Frames\PetFrame.lua
+Frames\ArenaFrames.lua
+Frames\PartyFrames.lua
 SAdUnitFrames.lua
 Localization.lua
