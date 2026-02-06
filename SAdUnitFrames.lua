@@ -533,3 +533,183 @@ end
 function addon:UpdateAllFrames()
     self.unitFrames.Player:Initialize()
 end
+
+---------------------------------------------------------------------------
+-- Shared Big Aura frame builder
+-- Used by BigCC, BigBuffs, BigDefensives, and any future "big icon" module.
+--
+-- Parameters:
+--   frame      – parent oUF unit frame
+--   modCfg     – module config table (enabled, showCooldownNumbers,
+--                showGlow, glowColor, placeholderIcon, placeholderOpacity)
+--   panelHeight – height of the right panel (used to compute icon size)
+--   elementKey – key to store the element on the frame (e.g. "BigCC")
+--   tooltipType – "buff" or "debuff" (determines tooltip API)
+--   options    – positioning overrides (anchor, relativeTo, etc.)
+--
+-- Returns the element frame, or nil if disabled.
+---------------------------------------------------------------------------
+function addon:CreateBigAuraFrame(frame, modCfg, panelHeight, elementKey, tooltipType, options)
+    if not frame then return nil end
+    if not modCfg.enabled then return nil end
+
+    options = options or {}
+    local spacing = options.spacing or 2
+    local height = options.height or math.floor((panelHeight * 0.66) - (spacing / 2))
+    local width = height -- square
+
+    local element = CreateFrame("Frame", nil, frame)
+    element:SetPoint(
+        options.anchor or "TOPRIGHT",
+        options.relativeTo or frame,
+        options.relativePoint or "TOPRIGHT",
+        options.offsetX or 0,
+        options.offsetY or 0
+    )
+    element:SetSize(width, height)
+
+    -- Placeholder icon (desaturated, shown when nothing is active)
+    local placeholder = element:CreateTexture(nil, "BACKGROUND")
+    placeholder:SetAllPoints(element)
+    placeholder:SetTexture("Interface\\Icons\\" .. modCfg.placeholderIcon)
+    placeholder:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    placeholder:SetDesaturated(true)
+    placeholder:SetAlpha(modCfg.placeholderOpacity)
+    element.Placeholder = placeholder
+
+    -- Active icon (shown when an aura is active)
+    local icon = element:CreateTexture(nil, "ARTWORK")
+    icon:SetAllPoints(element)
+    icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    icon:Hide()
+    element.Icon = icon
+
+    -- Cooldown swipe overlay
+    local cooldown = CreateFrame("Cooldown", nil, element, "CooldownFrameTemplate")
+    cooldown:SetAllPoints(element)
+    cooldown:SetDrawEdge(false)
+    cooldown:SetReverse(true)
+    cooldown:EnableMouse(false)
+    cooldown.noCooldownCount = not modCfg.showCooldownNumbers
+    cooldown:SetHideCountdownNumbers(not modCfg.showCooldownNumbers)
+    element.Cooldown = cooldown
+
+    -- Proc glow (animated flipbook border)
+    if modCfg.showGlow then
+        local gc = modCfg.glowColor
+        local procGlow = CreateFrame("Frame", nil, element)
+        procGlow:SetSize(element:GetWidth() * 1.4, element:GetHeight() * 1.4)
+        procGlow:SetPoint("CENTER")
+
+        local procLoop = procGlow:CreateTexture(nil, "ARTWORK")
+        procLoop:SetAtlas("UI-HUD-ActionBar-Proc-Loop-Flipbook")
+        procLoop:SetAllPoints(procGlow)
+        procLoop:SetAlpha(0)
+
+        if gc then
+            procLoop:SetDesaturated(true)
+            procLoop:SetVertexColor(gc.r, gc.g, gc.b)
+        end
+
+        procGlow.ProcLoopFlipbook = procLoop
+
+        local procLoopAnim = procGlow:CreateAnimationGroup()
+        procLoopAnim:SetLooping("REPEAT")
+
+        local alpha = procLoopAnim:CreateAnimation("Alpha")
+        alpha:SetChildKey("ProcLoopFlipbook")
+        alpha:SetDuration(0.001)
+        alpha:SetOrder(0)
+        alpha:SetFromAlpha(1)
+        alpha:SetToAlpha(1)
+
+        local flip = procLoopAnim:CreateAnimation("FlipBook")
+        flip:SetChildKey("ProcLoopFlipbook")
+        flip:SetDuration(1)
+        flip:SetOrder(0)
+        flip:SetFlipBookRows(6)
+        flip:SetFlipBookColumns(5)
+        flip:SetFlipBookFrames(30)
+
+        procGlow.ProcLoop = procLoopAnim
+        procGlow:Hide()
+        element.ProcGlow = procGlow
+    end
+
+    -- Tooltip support
+    local tooltipFunc = (tooltipType == "buff")
+        and "SetUnitBuffByAuraInstanceID"
+        or  "SetUnitDebuffByAuraInstanceID"
+
+    element:EnableMouse(true)
+    element:SetScript("OnEnter", function(self)
+        if self.activeAuraInstanceID and self.activeUnit then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip[tooltipFunc](GameTooltip, self.activeUnit, self.activeAuraInstanceID)
+            GameTooltip:Show()
+        end
+    end)
+    element:SetScript("OnLeave", function(self)
+        GameTooltip:Hide()
+    end)
+
+    self:AddBorder(element)
+
+    frame[elementKey] = element
+
+    return element
+end
+
+---------------------------------------------------------------------------
+-- Shared helpers: show / hide a big aura element
+---------------------------------------------------------------------------
+
+--- Show an active aura on a big aura element.
+--- @param element  table  The big aura frame (BigCC / BigBuffs / BigDefensives)
+--- @param texture  string Icon texture path or id
+--- @param unit     string Unit token
+--- @param auraInstanceID number
+--- @param startTime number  GetTime()-based start
+--- @param duration  number  Total duration in seconds
+function addon:BigAuraShow(element, texture, unit, auraInstanceID, startTime, duration)
+    element.Icon:SetTexture(texture)
+    element.Icon:Show()
+    element.activeAuraInstanceID = auraInstanceID
+    element.activeUnit = unit
+
+    if element.Placeholder then
+        element.Placeholder:Hide()
+    end
+
+    if element.ProcGlow then
+        element.ProcGlow:Show()
+        element.ProcGlow.ProcLoop:Play()
+    end
+
+    if element.Cooldown then
+        if duration and duration > 0 and startTime and startTime > 0 then
+            element.Cooldown:SetCooldown(startTime, duration)
+            element.Cooldown:Show()
+        else
+            element.Cooldown:Hide()
+        end
+    end
+end
+
+--- Hide / reset a big aura element back to placeholder state.
+function addon:BigAuraHide(element)
+    element.Icon:Hide()
+    element.activeAuraInstanceID = nil
+    element.activeUnit = nil
+
+    if element.Placeholder then
+        element.Placeholder:Show()
+    end
+    if element.Cooldown then
+        element.Cooldown:Hide()
+    end
+    if element.ProcGlow then
+        element.ProcGlow.ProcLoop:Stop()
+        element.ProcGlow:Hide()
+    end
+end

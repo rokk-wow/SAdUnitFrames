@@ -4,37 +4,47 @@ local addon = SAdCore:GetAddon(addonName)
 local oUF = ns.oUF
 
 function addon:CreateBigBuffs(frame, panelHeight, options)
-    if not frame then
-        return nil
+    local modCfg = self.config.modules.bigBuffs
+    return self:CreateBigAuraFrame(frame, modCfg, panelHeight, "BigBuffs", "buff", options)
+end
+
+---------------------------------------------------------------------------
+-- oUF element: BigBuffs
+-- TODO: Implement aura-based update with a priority buff list
+---------------------------------------------------------------------------
+
+local function Update(self, event, unit)
+    if self.unit ~= unit then return end
+
+    local element = self.BigBuffs
+    if not element then return end
+
+    if element.PreUpdate then
+        element:PreUpdate(unit)
     end
 
-    if not self.config.modules.bigBuffs.enabled then return nil end
+    -- TODO: Scan unit auras for priority buffs and show the highest priority one
+    -- For now, element stays in placeholder state
 
-    options = options or {}
-    local spacing = options.spacing or 2
-    local height = options.height or math.floor((panelHeight * 0.66) - (spacing / 2))
-    local width = height -- square
-
-    local bigBuffs = CreateFrame("Frame", nil, frame)
-    bigBuffs:SetPoint(options.anchor or "TOPRIGHT",
-        options.relativeTo or frame,
-        options.relativePoint or "TOPRIGHT",
-        options.offsetX or 0,
-        options.offsetY or 0)
-    bigBuffs:SetSize(width, height)
-
-    -- Placeholder icon (desaturated at 50% opacity)
-    local modCfg = self.config.modules.bigBuffs
-    local bg = bigBuffs:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints(bigBuffs)
-    bg:SetTexture("Interface\\Icons\\" .. modCfg.placeholderIcon)
-    bg:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-    bg:SetDesaturated(true)
-    bg:SetAlpha(modCfg.placeholderOpacity)
-
-    addon:AddBorder(bigBuffs)
-
-    frame.BigBuffs = bigBuffs
-
-    return bigBuffs
+    if element.PostUpdate then
+        element:PostUpdate(unit, nil)
+    end
 end
+
+local function Enable(self)
+    local element = self.BigBuffs
+    if element then
+        self:RegisterEvent("UNIT_AURA", Update)
+        return true
+    end
+end
+
+local function Disable(self)
+    local element = self.BigBuffs
+    if element then
+        addon:BigAuraHide(element)
+        self:UnregisterEvent("UNIT_AURA", Update)
+    end
+end
+
+oUF:AddElement("BigBuffs", Update, Enable, Disable)

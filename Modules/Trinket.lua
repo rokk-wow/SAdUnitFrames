@@ -23,10 +23,16 @@ function addon:CreateTrinket(frame, panelHeight, options)
         options.offsetY or 0)
     trinket:SetSize(width, height)
 
-    -- Placeholder light yellow box
-    local bg = trinket:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints(trinket)
-    bg:SetColorTexture(1.0, 0.95, 0.5, 0.4)
+    local modCfg = self.config.modules.trinket
+
+    -- Placeholder icon (desaturated, shown when trinket is available)
+    local placeholder = trinket:CreateTexture(nil, "BACKGROUND")
+    placeholder:SetAllPoints(trinket)
+    placeholder:SetTexture("Interface\\Icons\\" .. modCfg.placeholderIcon)
+    placeholder:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    placeholder:SetDesaturated(true)
+    placeholder:SetAlpha(modCfg.placeholderOpacity)
+    trinket.Placeholder = placeholder
 
     addon:AddBorder(trinket)
 

@@ -265,7 +265,7 @@ addon.config = {
         bigCC = {
             enabled = true,
             showCooldownNumbers = true,
-            showGlow = true,
+            showGlow = false,
             glowColor = { r = 1, g = 0, b = 0, a = 1 },   -- red
             placeholderIcon = "spell_nature_polymorph",
             placeholderOpacity = 0.3,
@@ -273,7 +273,7 @@ addon.config = {
 
         bigBuffs = {
             enabled = true,
-            showCooldownNumbers = false,
+            showCooldownNumbers = true,
             showGlow = true,
             glowColor = { r = 0.2, g = 0.6, b = 1, a = 1 }, -- blue
             placeholderIcon = "inv_sword_04",
@@ -311,6 +311,11 @@ addon.config = {
 
         trinket = {
             enabled = true,
+            showCooldownNumbers = true,
+            showGlow = true,
+            glowColor = { r = 1, g = 1, b = 0, a = 1 }, -- yellow
+            placeholderIcon = "ability_pvp_gladiatormedallion",
+            placeholderOpacity = 0.3,
         },
     },
 }

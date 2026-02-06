@@ -4,37 +4,47 @@ local addon = SAdCore:GetAddon(addonName)
 local oUF = ns.oUF
 
 function addon:CreateBigDefensives(frame, panelHeight, options)
-    if not frame then
-        return nil
+    local modCfg = self.config.modules.bigDefensives
+    return self:CreateBigAuraFrame(frame, modCfg, panelHeight, "BigDefensives", "buff", options)
+end
+
+---------------------------------------------------------------------------
+-- oUF element: BigDefensives
+-- TODO: Implement aura-based update with a priority defensive list
+---------------------------------------------------------------------------
+
+local function Update(self, event, unit)
+    if self.unit ~= unit then return end
+
+    local element = self.BigDefensives
+    if not element then return end
+
+    if element.PreUpdate then
+        element:PreUpdate(unit)
     end
 
-    if not self.config.modules.bigDefensives.enabled then return nil end
+    -- TODO: Scan unit auras for priority defensives and show the highest priority one
+    -- For now, element stays in placeholder state
 
-    options = options or {}
-    local spacing = options.spacing or 2
-    local height = options.height or math.floor((panelHeight * 0.66) - (spacing / 2))
-    local width = height -- square
-
-    local bigDefensives = CreateFrame("Frame", nil, frame)
-    bigDefensives:SetPoint(options.anchor or "TOPRIGHT",
-        options.relativeTo or frame,
-        options.relativePoint or "TOPRIGHT",
-        options.offsetX or 0,
-        options.offsetY or 0)
-    bigDefensives:SetSize(width, height)
-
-    -- Placeholder icon (desaturated at 50% opacity)
-    local modCfg = self.config.modules.bigDefensives
-    local bg = bigDefensives:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints(bigDefensives)
-    bg:SetTexture("Interface\\Icons\\" .. modCfg.placeholderIcon)
-    bg:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-    bg:SetDesaturated(true)
-    bg:SetAlpha(modCfg.placeholderOpacity)
-
-    addon:AddBorder(bigDefensives)
-
-    frame.BigDefensives = bigDefensives
-
-    return bigDefensives
+    if element.PostUpdate then
+        element:PostUpdate(unit, nil)
+    end
 end
+
+local function Enable(self)
+    local element = self.BigDefensives
+    if element then
+        self:RegisterEvent("UNIT_AURA", Update)
+        return true
+    end
+end
+
+local function Disable(self)
+    local element = self.BigDefensives
+    if element then
+        addon:BigAuraHide(element)
+        self:UnregisterEvent("UNIT_AURA", Update)
+    end
+end
+
+oUF:AddElement("BigDefensives", Update, Enable, Disable)
