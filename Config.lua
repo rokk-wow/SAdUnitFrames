@@ -25,6 +25,16 @@ addon.config = {
         
         -- Border settings
         borderWidth = 2,
+
+        -- Blizzard frame visibility (per-frame)
+        showBlizzardPlayerFrame = false,
+        showBlizzardTargetFrame = false,
+        showBlizzardTargetTargetFrame = false,
+        showBlizzardFocusFrame = false,
+        showBlizzardFocusTargetFrame = false,
+        showBlizzardPetFrame = false,
+        showBlizzardPartyFrames = true,
+        showBlizzardArenaFrames = false,
         
         -- Primary frames (Player, Target)
         primaryFramesWidth = 203,
@@ -272,7 +282,7 @@ addon.config = {
         },
 
         bigBuffs = {
-            enabled = true,
+            enabled = false,
             showCooldownNumbers = true,
             showGlow = true,
             glowColor = { r = 0.2, g = 0.6, b = 1, a = 1 }, -- blue
@@ -281,7 +291,7 @@ addon.config = {
         },
 
         bigDefensives = {
-            enabled = true,
+            enabled = false,
             showCooldownNumbers = true,
             showGlow = true,
             glowColor = { r = 0.76, g = 0.6, b = 0.36, a = 1 }, -- tan/gold
@@ -296,12 +306,21 @@ addon.config = {
         },
 
         dispelBorder = {
-            enabled = false,
+            enabled = true,
+            borderSize = 3,
+            debuffTypeColors = {
+                Magic   = { r = 1.00, g = 0, b = 1.00 },
+                Curse   = { r = 0.60, g = 0.00, b = 1.00 },
+                Disease = { r = 0.60, g = 0.40, b = 0.00 },
+                Poison  = { r = 0.00, g = 0.60, b = 0.00 },
+                Bleed   = { r = 0.80, g = 0.00, b = 0.00 },
+                Enrage  = { r = 0.95, g = 0.37, b = 0.96 },
+            },
         },
 
         enemyDebuffs = {
             enabled = true,
-            showCooldownNumbers = true,
+            showCooldownNumbers = false,
         },
 
         playerBuffs = {
@@ -310,7 +329,7 @@ addon.config = {
         },
 
         trinket = {
-            enabled = true,
+            enabled = false,
             showCooldownNumbers = true,
             showGlow = true,
             glowColor = { r = 1, g = 1, b = 0, a = 1 }, -- yellow

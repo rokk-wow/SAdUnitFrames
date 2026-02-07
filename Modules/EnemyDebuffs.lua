@@ -3,6 +3,14 @@ local SAdCore = LibStub("SAdCore-1")
 local addon = SAdCore:GetAddon(addonName)
 local oUF = ns.oUF
 
+---------------------------------------------------------------------------
+-- EnemyDebuffs – shows all hostile (HARMFUL) debuffs on the unit.
+--
+-- Leverages oUF's built-in Debuffs element (elements/auras.lua) which
+-- handles aura tracking, button recycling, cooldowns via DurationObject,
+-- tooltips via SetUnitDebuffByAuraInstanceID, and sorting.
+-- All rendering is secret-value-safe.
+---------------------------------------------------------------------------
 function addon:CreateEnemyDebuffs(frame, panelHeight, options)
     if not frame then
         return nil
@@ -10,47 +18,50 @@ function addon:CreateEnemyDebuffs(frame, panelHeight, options)
 
     if not self.config.modules.enemyDebuffs.enabled then return nil end
 
+    local cfg = self.config.global
+    local modCfg = self.config.modules.enemyDebuffs
     options = options or {}
+
     local spacing = options.spacing or 2
     local height = options.height or math.floor((panelHeight * 0.34) - (spacing / 2)) + 1
-    local size = height -- square debuff icons matching castbar height
+    local size = height -- square icons matching castbar height
     local num = options.num or 4
 
+    -- Container frame – oUF's aura element uses this as the parent
     local debuffs = CreateFrame("Frame", nil, frame)
-    debuffs:SetPoint(options.anchor or "BOTTOMLEFT",
+    debuffs:SetPoint(
+        options.anchor or "BOTTOMLEFT",
         options.relativeTo or frame,
         options.relativePoint or "BOTTOMLEFT",
         options.offsetX or 0,
-        options.offsetY or 0)
+        options.offsetY or 0
+    )
     debuffs:SetSize(num * (size + spacing), size)
 
-    -- Create 4 placeholder debuff icons
-    local placeholderColors = {
-        {0.8, 0.2, 0.8, 0.5}, -- purple
-        {0.9, 0.3, 0.1, 0.5}, -- orange
-        {0.2, 0.7, 0.2, 0.5}, -- green
-        {0.6, 0.2, 0.2, 0.5}, -- dark red
-    }
+    -- oUF Debuffs element configuration
+    debuffs.num = num
+    debuffs.size = size
+    debuffs.spacing = spacing
+    debuffs.initialAnchor = options.initialAnchor or "BOTTOMRIGHT"
+    debuffs.growthX = options.growthX or "LEFT"
+    debuffs.growthY = options.growthY or "UP"
+    debuffs.filter = "HARMFUL"
+    debuffs.tooltipAnchor = options.tooltipAnchor or "ANCHOR_TOP"
+    debuffs.showDebuffType = true
+    debuffs.disableMouse = false
 
-    for i = 1, num do
-        local icon = CreateFrame("Frame", nil, debuffs)
-        icon:SetSize(size, size)
-        if i == 1 then
-            icon:SetPoint("BOTTOMRIGHT", debuffs, "BOTTOMRIGHT", 0, 0)
-        else
-            icon:SetPoint("BOTTOMRIGHT", debuffs[i - 1], "BOTTOMLEFT", -spacing, 0)
+    -- Style each button via the shared helper
+    debuffs.PostCreateButton = function(element, button)
+        addon:CreateAuraPostCreateButton(button, addon:GetFontPath(), cfg.extraSmallFontSize)
+        if button.Cooldown then
+            button.Cooldown.noCooldownCount = not modCfg.showCooldownNumbers
+            button.Cooldown:SetHideCountdownNumbers(not modCfg.showCooldownNumbers)
+            button.Cooldown:SetReverse(true)
         end
-
-        local bg = icon:CreateTexture(nil, "BACKGROUND")
-        bg:SetAllPoints(icon)
-        local c = placeholderColors[i]
-        bg:SetColorTexture(c[1], c[2], c[3], c[4])
-
-        addon:AddBorder(icon)
-
-        debuffs[i] = icon
     end
 
+    -- Register as oUF's Debuffs element so it gets UNIT_AURA updates
+    frame.Debuffs = debuffs
     frame.EnemyDebuffs = debuffs
 
     return debuffs

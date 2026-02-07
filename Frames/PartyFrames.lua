@@ -168,31 +168,35 @@ function addon:StylePartyFrame(frame, unit, anchor, relativeTo, relativePoint, o
     HealthPrediction.maxOverflow = cfg.maxAbsorbOverflow
     frame.HealthPrediction = HealthPrediction
 
-    -- Right panel: Big CC (square, top portion) and Castbar (80% health bar width, bottom)
+    -- Right panel: Big modules chain to the right of the health bar.
+    -- Each module anchors to the previous ENABLED one, skipping disabled.
     local rightPanelSpacing = cfg.partyRightPanelSpacing
+    local lastRightAnchor = Health
 
     local bigCC = addon:CreateBigCC(frame, cfg.partyFramesHeight, {
         spacing = rightPanelSpacing,
         anchor = "TOPLEFT",
-        relativeTo = Health,
+        relativeTo = lastRightAnchor,
         relativePoint = "TOPRIGHT",
         offsetX = rightPanelSpacing,
         offsetY = 0,
     })
+    if bigCC then lastRightAnchor = bigCC end
 
-    addon:CreateBigBuffs(frame, cfg.partyFramesHeight, {
+    local bigBuffs = addon:CreateBigBuffs(frame, cfg.partyFramesHeight, {
         spacing = rightPanelSpacing,
         anchor = "TOPLEFT",
-        relativeTo = bigCC,
+        relativeTo = lastRightAnchor,
         relativePoint = "TOPRIGHT",
         offsetX = rightPanelSpacing,
         offsetY = 0,
     })
+    if bigBuffs then lastRightAnchor = bigBuffs end
 
     addon:CreateBigDefensives(frame, cfg.partyFramesHeight, {
         spacing = rightPanelSpacing,
         anchor = "TOPLEFT",
-        relativeTo = frame.BigBuffs,
+        relativeTo = lastRightAnchor,
         relativePoint = "TOPRIGHT",
         offsetX = rightPanelSpacing,
         offsetY = 0,
@@ -228,10 +232,8 @@ function addon:StylePartyFrame(frame, unit, anchor, relativeTo, relativePoint, o
         offsetY = 0,
     })
 
-    -- Dispel border (inside health bar) — placeholder on party2 only
-    if unit == "party2" then
-        addon:CreateDispelBorder(frame)
-    end
+    -- Dispel border (inside health bar) — shows when unit has a dispellable debuff
+    addon:CreateDispelBorder(frame)
 
     addon:CreatePlayerBuffs(frame, cfg.partyFramesWidth, cfg.partyFramesHeight, {
         offsetX = -5,

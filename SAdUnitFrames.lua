@@ -45,14 +45,41 @@ function addon:Initialize()
         oUF.colors.power[Enum.PowerType.LunarPower or 8] = oUF.colors.power["LUNAR_POWER"]
     end
     
-    -- Prevent oUF from hiding Blizzard party and arena frames
-    -- This allows both frames to be visible for development
+    -- Allow config to control whether Blizzard frames are hidden or shown.
     if oUF and oUF.DisableBlizzard then
         local originalDisableBlizzard = oUF.DisableBlizzard
-        oUF.DisableBlizzard = function(self, unit)
-            if unit and not unit:match('party%d?$') and not unit:match('arena%d?$') then
-                originalDisableBlizzard(self, unit)
+        local function shouldShowBlizzardFrame(unit)
+            if not unit then
+                return false
             end
+
+            local cfg = addon.config.global
+            if unit == "player" then
+                return cfg.showBlizzardPlayerFrame
+            elseif unit == "target" then
+                return cfg.showBlizzardTargetFrame
+            elseif unit == "targettarget" then
+                return cfg.showBlizzardTargetTargetFrame
+            elseif unit == "focus" then
+                return cfg.showBlizzardFocusFrame
+            elseif unit == "focustarget" then
+                return cfg.showBlizzardFocusTargetFrame
+            elseif unit == "pet" then
+                return cfg.showBlizzardPetFrame
+            elseif unit:match("party%d?$") then
+                return cfg.showBlizzardPartyFrames
+            elseif unit:match("arena%d?$") then
+                return cfg.showBlizzardArenaFrames
+            end
+
+            return false
+        end
+
+        oUF.DisableBlizzard = function(self, unit)
+            if shouldShowBlizzardFrame(unit) then
+                return
+            end
+            originalDisableBlizzard(self, unit)
         end
     end
 
@@ -680,7 +707,12 @@ end
 --- @param auraInstanceID number
 --- @param startTime number  GetTime()-based start
 --- @param duration  number  Total duration in seconds
-function addon:BigAuraShow(element, texture, unit, auraInstanceID, startTime, duration, matchCount)
+--- Show a big aura element.
+-- startTimeOrDuration: either a numeric startTime (from C_LossOfControl)
+--                      or a DurationObject (from C_UnitAuras.GetAuraDuration).
+-- duration: numeric duration when startTimeOrDuration is a number; nil when
+--           startTimeOrDuration is a DurationObject.
+function addon:BigAuraShow(element, texture, unit, auraInstanceID, startTimeOrDuration, duration, matchCount)
     element.Icon:SetTexture(texture)
     element.Icon:Show()
     element.activeAuraInstanceID = auraInstanceID
@@ -696,8 +728,17 @@ function addon:BigAuraShow(element, texture, unit, auraInstanceID, startTime, du
     end
 
     if element.Cooldown then
-        if duration and duration > 0 and startTime and startTime > 0 then
-            element.Cooldown:SetCooldown(startTime, duration)
+        if duration then
+            -- Numeric start/duration (e.g. from C_LossOfControl safe fields)
+            if duration > 0 and startTimeOrDuration and startTimeOrDuration > 0 then
+                element.Cooldown:SetCooldown(startTimeOrDuration, duration)
+                element.Cooldown:Show()
+            else
+                element.Cooldown:Hide()
+            end
+        elseif startTimeOrDuration then
+            -- DurationObject from C_UnitAuras.GetAuraDuration (secret-safe)
+            element.Cooldown:SetCooldownFromDurationObject(startTimeOrDuration)
             element.Cooldown:Show()
         else
             element.Cooldown:Hide()
